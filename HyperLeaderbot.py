@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 
-BOT_TOKEN = "MTE0MTQxNDE3NDc2NTg4NzUwOQ.Gpjoqn.k31a8a48AOEGxiipaIWutGOzmNpEKiTnyn84Fg"
+BOT_TOKEN = # **Insert Token**
 CHANNEL_ID = 0
 intents = discord.Intents.default()
 intents.message_content = True
