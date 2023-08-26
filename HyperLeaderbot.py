@@ -1,7 +1,9 @@
 from discord.ext import commands
 import discord
 
-BOT_TOKEN = # **Insert Token**
+with open("bot_token.txt") as file:
+    BOT_TOKEN = file.read()
+    
 CHANNEL_ID = 0
 intents = discord.Intents.default()
 intents.message_content = True
@@ -27,14 +29,34 @@ role_array = [
     [405, 1054220978143645728],
     [410, 1054220979796197406],
     [415, 1054220981088039052],
-    [420, 1054220981994004520]
+    [420, 1054220981994004520],
+    [425, 1144733410728890369]
     ]
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+top_roles = [
+    ["Top 3", 1142897619379695707],
+    ["Top 10", 1142897869439893526],
+    ["Top 25", 1142897909029945394]
+]
 
-# function for when a message is posted
+wr_holder_id = 1142895896372203550
+
+bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
+
+# function for adding a role
+@bot.command()
+async def remove_role(source, oldroleid):
+    await source.interaction.user.remove_roles(discord.utils.get(source.interaction.user.guild.roles, id = oldroleid))
+
+# function for removing a role
+@bot.command()
+async def add_role(source, newroleid):
+    await source.interaction.user.add_roles(discord.utils.get(source.interaction.user.guild.roles, id = newroleid))
+
+# ran when a message is posted
 @bot.event
 async def on_message(message):
+
     channel = bot.get_channel(CHANNEL_ID)
 
     # prevents infinite loop from bot responding to itself
@@ -47,11 +69,14 @@ async def on_message(message):
         embed_op_id = message.interaction.user.id
         embed_type = message.interaction.name
         description = embed_description.splitlines()
+
+        print(description)
        
         # parse embed information and store variables
         score_new = round(float(description[1].split()[1].strip("*")), 3)
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
         score_old = round(score_new-score_dif, 3)
+        rank = description[0].split()[1].strip("*")
 
         # find users old role
         old_role_id = "no score assigned"
@@ -64,10 +89,12 @@ async def on_message(message):
         # check if score is below 0
         if score_new < 0:
             new_role_id = role_array[0][1]
+            next_score = role_array[1]
 
-        # check if score is above 420
-        elif score_new >= 420:
-            new_role_id = role_array[19][1]
+        # check if score is above 425
+        elif score_new >= 425:
+            new_role_id = role_array[20][1]
+            next_score = None
 
         # determine which role is correct for new score
         else:
@@ -76,24 +103,33 @@ async def on_message(message):
                 x += 1
             else:
                 new_role_id = role_array[x][1]
+                next_score = role_array[x+1]
 
         # check if this is their first time triggering bot and update role
         if old_role_id == "no score assigned":
-            await message.interaction.user.add_roles(discord.utils.get(message.interaction.user.guild.roles, id = new_role_id))
+            await add_role(message, new_role_id)
         
         # check if new role is the same as old role and do nothing
         elif old_role_id == new_role_id:
-            print("no role update was needed")
+            if next_score != None:
+                dist_next_role = round(next_score[0]-score_new, 3)
+                await message.channel.send(f"No role change needed \n\n You're **{dist_next_role}** points away from the next role: <@&{next_score[1]}>")
+            else:
+                await message.channel.send(f"You are a god, {message.interaction.user.name}. No higher role left")
+
+            
 
         # replace old role with new role
         else:
             # remove old role
-            await message.interaction.user.remove_roles(discord.utils.get(message.interaction.user.guild.roles, id = old_role_id))
+            await remove_role(message, old_role_id)
             # add new role
-            await message.interaction.user.add_roles(discord.utils.get(message.interaction.user.guild.roles, id = new_role_id))
-
-
-
+            await add_role(message, new_role_id)
+            # post embed with role changes
+            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            embed_role_update.add_field(name="**Removed:**", value=f"<@&{old_role_id}>", inline=True)
+            embed_role_update.add_field(name="**Added**", value=f"<@&{new_role_id}>", inline=True)
+            await message.channel.send(embed=embed_role_update)
 
 bot.run(BOT_TOKEN)
     
