@@ -69,8 +69,6 @@ async def on_message(message):
         embed_op_id = message.interaction.user.id
         embed_type = message.interaction.name
         description = embed_description.splitlines()
-
-        print(description)
        
         # parse embed information and store variables
         score_new = round(float(description[1].split()[1].strip("*")), 3)
@@ -108,6 +106,9 @@ async def on_message(message):
         # check if this is their first time triggering bot and update role
         if old_role_id == "no score assigned":
             await add_role(message, new_role_id)
+            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            embed_role_update.add_field(name="**Added**", value=f"<@&{new_role_id}>", inline=True)
+            await message.channel.send(embed=embed_role_update)
         
         # check if new role is the same as old role and do nothing
         elif old_role_id == new_role_id:
