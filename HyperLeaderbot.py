@@ -215,17 +215,21 @@ async def top_role_update(ctx):
             await user.remove_roles(top_10_role)
         if top_25_role in user.roles and user.id not in top_25_user_id:
             await user.remove_roles(top_25_role)
-    
+
     # check wr id and update if necessary
     wr_user = ctx.guild.get_member(wr_user_id)
     if wr_user == None:
         pass
+    elif ctx.guild.get_member(wr_user) is None:
+            pass
     else:
         await wr_user.add_roles(wr_role)
 
     # check top 3 ids and update if necessary
     for user in top_3_user_id:
         if user == None:
+            pass
+        elif ctx.guild.get_member(user) is None:
             pass
         # assign user top 3 role
         else:
@@ -236,6 +240,8 @@ async def top_role_update(ctx):
     for user in top_10_user_id:
         if user == None:
             pass
+        elif ctx.guild.get_member(user) is None:
+            pass
         else:
             top_10_user = ctx.guild.get_member(user)
             await top_10_user.add_roles(top_10_role)
@@ -243,6 +249,8 @@ async def top_role_update(ctx):
     # check top 25 ids and update if necessary
     for user in top_25_user_id:
         if user == None:
+            pass
+        elif ctx.guild.get_member(user) is None:
             pass
         else:
             top_25_user = ctx.guild.get_member(user)
@@ -318,20 +326,16 @@ async def on_message(message):
     # register command
     if message.content.startswith('register'):
         register_id = str(message.content.split()[1])
-        update_dict(register_id, message.user.id, 'id_dictionary.json')
+        update_dict(register_id, message.author.id, 'id_dictionary.json')
 
     # checks if message is from SORATH bot, and it is the "/hyperdemon pb" command
     if message.author.id == 798042141988618251 and message.interaction.name == "hyperdemon pb":
-
-        lb_update()
-        added_roles, removed_roles = await top_role_update(message)
-        await auto_400_post(bot.get_channel(1047631851193368697))
 
         embed_description = message.embeds[0].description
         embed_op_id = int(message.interaction.user.id)
         embed_type = message.interaction.name
         description = embed_description.splitlines()
-       
+
         # parse embed information and store variables
         score_new = round(float(description[1].split()[1].strip("*")), 3)
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
@@ -340,6 +344,10 @@ async def on_message(message):
 
         # update id dictionary
         update_dict(get_shit()[rank-1][2], embed_op_id, 'id_dictionary.json')
+
+        lb_update()
+        added_roles, removed_roles = await top_role_update(message)
+        await auto_400_post(bot.get_channel(1047631851193368697))
 
         # find users old role
         old_role_id = "no score assigned"
@@ -382,9 +390,22 @@ async def on_message(message):
         
         # check if new role is the same as old role and do nothing
         elif old_role_id == new_role_id:
+            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            if removed_roles != []:
+                removestring = f""
+                for removedroleid in removed_roles:
+                    removestring = f"{removestring}<@&{removedroleid}>\n"
+                embed_role_update.add_field(name="**Removed:**", value=removestring, inline=True)
+            if added_roles != []:
+                addstring = f""
+                for addedroleid in added_roles:
+                    addstring = f"{addstring}<@&{addedroleid}>\n"
+                embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
+            if added_roles != [] or removed_roles != []:
+                await message.channel.send(embed=embed_role_update)
             if next_score != []:
                 dist_next_role = round(next_score[0]-score_new, 3)
-                await message.channel.send(f"No role change needed \n\n You're **{dist_next_role}** points away from the next role: <@&{next_score[1]}>")
+                await message.channel.send(f"You're **{dist_next_role}** points away from the next role: <@&{next_score[1]}>")
             else:
                 await message.channel.send(f"You are a god, {message.interaction.user.name}. No higher role left")
 
