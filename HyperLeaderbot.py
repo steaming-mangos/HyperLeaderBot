@@ -131,8 +131,8 @@ async def auto_400_post(hdnews: discord.channel):
             score_old = round(float(lb_dict_old[user_key]["score"]), 3)
             rank_new = int(lb_dict_new[user_key]["rank"])
             rank_old = int(lb_dict_old[user_key]["rank"])
-            score_dif = score_new - score_old
-            rank_change = rank_new - rank_old
+            score_dif = round((score_new - score_old), 3)
+            rank_change = rank_old - rank_new
             howmany400 = int
             if score_old < 400:
                 new_400 = True
