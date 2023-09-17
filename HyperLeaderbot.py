@@ -205,8 +205,15 @@ async def top_role_update(ctx):
     for x in key_list[10:25]:
         top_25_user_id.append(id_dict.get(x[1]))
 
+    top_registered_users = []
+    for x in key_list[0:100]:
+        if id_dict.get(x[1]) != None:
+            registered_user = ctx.guild.get_member(id_dict.get(x[1]))
+            if registered_user != None:
+                top_registered_users.append(registered_user) 
+
     # remove roles from anyone not in top lists
-    for user in ctx.guild.members:
+    for user in top_registered_users:
         if wr_role in user.roles and user.id != wr_user_id:
             await user.remove_roles(wr_role)
         if top_3_role in user.roles and user.id not in top_3_user_id:
