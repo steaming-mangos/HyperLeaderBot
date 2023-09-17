@@ -134,13 +134,18 @@ async def auto_400_post(hdnews: discord.channel):
             score_dif = round((score_new - score_old), 3)
             rank_change = rank_old - rank_new
             howmany400 = int
+            
             if score_old < 400:
                 new_400 = True
                 score_list = [sublist[0] for sublist in key_list]
                 howmany400 = sum(float(score) >= 400 for score in score_list)
             else:
                 new_400 = False
-                
+
+            score_new = format(score_new, '.3f')
+            score_old = format(score_old, '.3f')
+            score_dif = format(score_dif, '.3f')
+
             # send news post
             if user_id == None and new_400 == False:
                 await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} ranks.")
