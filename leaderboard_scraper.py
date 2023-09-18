@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-import re
 
 def get_shit():
     r = requests.get("https://hyprd.mn/leaderboards")
@@ -11,14 +10,14 @@ def get_shit():
     a = t.find_all('a')[0::2]
     b = t.find_all('a')[1::2]
 
-    lb = []
+    lb = {}
     # a is user id and username
     # b is run id and score
-    for i in range(1000):
+    for i in range(300):
         uid = a[i].attrs.get("href").rfind("/")
         uid = a[i].attrs.get("href")[uid+1::]
         rlink = b[i].attrs.get("href").rfind("/")
         rlink = b[i].attrs.get("href")[rlink + 1::]
-        row = [i + 1, a[i].text, uid, b[i].text, rlink]
-        lb.append(row) 
+        lb[uid] = {'rank': i+1, 'username': a[i].text, 'score': b[i].text, 'run_link': rlink }
+
     return lb
