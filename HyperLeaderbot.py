@@ -359,11 +359,13 @@ async def on_message(message):
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
         score_old = round(score_new-score_dif, 3)
         rank = int(description[0].split()[1].strip("*"))
-
+        
         # update id dictionary
-        update_dict(get_shit()[rank-1][2], embed_op_id, 'id_dictionary.json')
-
         lb_update()
+        with open("key_list.json", "r") as outfile:
+            key_list = json.load(outfile)
+        update_dict(key_list[rank-1][1], embed_op_id, 'id_dictionary.json')
+        
         added_roles, removed_roles = await top_role_update(message)
         await auto_400_post(bot.get_channel(1047631851193368697))
 
