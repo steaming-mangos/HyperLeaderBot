@@ -76,11 +76,11 @@ def ordinal(value):
     return ordval
 
 # leaderboard update funtion
-def lb_update():
+async def lb_update():
     #set old leaderboard as new one
     shutil.copyfile('lb_dict_new.json', 'lb_dict_old.json')
 
-    lb_dict= get_shit()
+    lb_dict = await get_shit()
     key_list = []
     for x in lb_dict:
         key_list.append([lb_dict[x]['score'], x])
@@ -152,27 +152,27 @@ async def auto_400_post(hdnews: discord.channel):
                 await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. It's a new WR! :crown::tada:")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
                 await hdnews.send(file=discord.File('400_test_image.png'))
-                await asyncio.sleep(2)  
+                time.sleep(2)  
             elif user_id == None and new_400 == False:
                 await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
                 await hdnews.send(file=discord.File('400_test_image.png'))
-                await asyncio.sleep(2)
+                time.sleep(2)
             elif user_id == None and new_400 == True:
                 await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
                 await hdnews.send(file=discord.File('400_test_image.png'))
-                await asyncio.sleep(2)
+                time.sleep(2)
             elif user_id != None and new_400 == False:
                 await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
                 await hdnews.send(file=discord.File('400_test_image.png'))
-                await asynchio.sleep(2)
+                time.sleep(2)
             elif user_id != None and new_400 == True:
                 await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
                 await hdnews.send(file=discord.File('400_test_image.png'))
-                await asyncio.sleep(2)
+                time.sleep(2)
             
         x += 1
         
@@ -310,7 +310,7 @@ async def top_role_update(ctx):
 @tasks.loop(minutes = 5)
 async def maintain_hdpals(channel):
 #async def maintain_hdpals(channel, guild):
-    lb_update()
+    await lb_update()
     #await top_role_update(guild)
     await auto_400_post(channel)
 
@@ -359,13 +359,12 @@ async def on_message(message):
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
         score_old = round(score_new-score_dif, 3)
         rank = int(description[0].split()[1].strip("*"))
-        
+
         # update id dictionary
-        lb_update()
-        with open("key_list.json", "r") as outfile:
-            key_list = json.load(outfile)
-        update_dict(key_list[rank-1][1], embed_op_id, 'id_dictionary.json')
-        
+        lb_dict = await get_shit()
+        update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
+
+        await lb_update()
         added_roles, removed_roles = await top_role_update(message)
         await auto_400_post(bot.get_channel(1047631851193368697))
 
