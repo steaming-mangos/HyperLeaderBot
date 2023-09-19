@@ -5,7 +5,7 @@ async def get_shit():
     async with aiohttp.ClientSession() as session:
         async with session.get("https://hyprd.mn/leaderboards") as r:
             html = await r.text()
-            soup = BeautifulSoup(html, "lxml")
+            soup = BeautifulSoup(html, "html.parser")
             t = soup.find('table', {'class:', 'leaderboard'})
 
             # [[rank, username, hd_id, score, run_link], [.....]]
