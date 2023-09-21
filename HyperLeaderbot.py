@@ -137,6 +137,8 @@ async def auto_400_post(hdnews: discord.channel):
 
             if rank_new == 1:
                 new_wr = True
+            else:
+                new_wr = False
 
             if rank_change == 1:
                 ranks = "rank"
