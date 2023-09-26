@@ -15,7 +15,7 @@ async def get_shit():
             lb = {}
             # a is user id and username
             # b is run id and score
-            for i in range(300):
+            for i in range(1000):
                 uid = a[i].attrs.get("href").rfind("/")
                 uid = a[i].attrs.get("href")[uid+1::]
                 rlink = b[i].attrs.get("href").rfind("/")
