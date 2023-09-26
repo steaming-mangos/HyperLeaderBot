@@ -344,9 +344,9 @@ async def on_message(message):
         return
 
     # register command
-    if message.content.startswith('register'):
-        register_id = str(message.content.split()[1])
-        update_dict(register_id, message.author.id, 'id_dictionary.json')
+    #if message.content.startswith('register'):
+        #register_id = str(message.content.split()[1])
+        #update_dict(register_id, message.author.id, 'id_dictionary.json')
 
     # checks if message is from SORATH bot, and it is the "/hyperdemon pb" command
     if message.author.id == 798042141988618251 and message.interaction.name == "hyperdemon pb":
@@ -363,8 +363,9 @@ async def on_message(message):
         rank = int(description[0].split()[1].strip("*"))
 
         # update id dictionary
-        lb_dict = await get_shit()
-        update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
+        if rank <= 1000:
+            lb_dict = await get_shit()
+            update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
 
         await lb_update()
         added_roles, removed_roles = await top_role_update(message)
