@@ -151,30 +151,25 @@ async def auto_400_post(hdnews: discord.channel):
 
             # send news post
             if new_wr == True:
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. It's a new WR! :crown::tada:")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                await hdnews.send(file=discord.File('400_test_image.png'))
-                time.sleep(2)  
+                pb_img = discord.File('400_test_image.png')
+                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. It's a new WR! :crown::tada:", file = pb_img)
             elif user_id == None and new_400 == False:
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                await hdnews.send(file=discord.File('400_test_image.png'))
-                time.sleep(2)
+                pb_img = discord.File('400_test_image.png')
+                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.", file = pb_img)
             elif user_id == None and new_400 == True:
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                await hdnews.send(file=discord.File('400_test_image.png'))
-                time.sleep(2)
+                pb_img = discord.File('400_test_image.png')
+                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!", file = pb_img)
             elif user_id != None and new_400 == False:
-                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                await hdnews.send(file=discord.File('400_test_image.png'))
-                time.sleep(2)
+                pb_img = discord.File('400_test_image.png')
+                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.", file = pb_img)               
             elif user_id != None and new_400 == True:
-                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!")
                 gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                await hdnews.send(file=discord.File('400_test_image.png'))
-                time.sleep(2)
+                pb_img = discord.File('400_test_image.png')
+                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!", file = pb_img)
             
         x += 1
         
