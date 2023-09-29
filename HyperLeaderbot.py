@@ -4,6 +4,7 @@ import json
 import time
 import shutil
 import datetime
+import asyncio
 from leaderboard_scraper import *
 from pb_img_gen import gen_pb
 
@@ -77,6 +78,7 @@ def ordinal(value):
 
 # leaderboard update funtion
 async def lb_update():
+    start_time = time.monotonic()
     #set old leaderboard as new one
     shutil.copyfile('lb_dict_new.json', 'lb_dict_old.json')
 
@@ -92,11 +94,13 @@ async def lb_update():
     # update the key list 
     with open("key_list.json", "w") as outfile:
         json.dump(key_list, outfile)
+    print(f"lb update took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
 
 # 400 post function
 @bot.command()
 async def auto_400_post(hdnews: discord.channel):
+    start_time = time.monotonic()
     # post format
     # Congratulations to *@user* for getting a new PB of *score*! They beat their old PB of *score_old* (*score_dif*), gaining *rank_dif* ranks. They are the *x* 400 player!
 
@@ -172,12 +176,13 @@ async def auto_400_post(hdnews: discord.channel):
                 await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!", file = pb_img)
             
         x += 1
-        
+    print(f"400_post_update function took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
 
 # role update function
 @bot.command()
 async def top_role_update(ctx):
+    start_time = time.monotonic()
 
     op = ctx.guild.get_member(ctx.interaction.user.id)
 
@@ -300,7 +305,7 @@ async def top_role_update(ctx):
         for role in invoker_roles_before:
             if role not in invoker_roles_after:
                 removed_roles.append(role.id)
-
+    print(f"top_role update function took {round((time.monotonic() - start_time), 3)} seconds to execute")
     return added_roles, removed_roles
 
 # check for roles and new 400 pb's every 5 minutes
@@ -331,6 +336,7 @@ async def add_role(source, newroleid):
 # ran when a message is posted
 @bot.event
 async def on_message(message):
+    start_time = time.monotonic()
 
     channel = bot.get_channel(CHANNEL_ID)
 
@@ -447,5 +453,6 @@ async def on_message(message):
                     addstring = f"{addstring}<@&{addedroleid}>\n"
                 embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
             await message.channel.send(embed=embed_role_update)
+print(f"on demand function took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
 bot.run(BOT_TOKEN)
