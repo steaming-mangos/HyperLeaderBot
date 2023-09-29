@@ -182,7 +182,7 @@ async def auto_400_post(hdnews: discord.channel):
 # role update function
 @bot.command()
 async def top_role_update(ctx):
-    start_time = time.monotonic()
+    total_start_time = time.monotonic()
 
     op = ctx.guild.get_member(ctx.interaction.user.id)
 
@@ -205,7 +205,8 @@ async def top_role_update(ctx):
     top_3_role = ctx.guild.get_role(top_roles[0][1])
     top_10_role = ctx.guild.get_role(top_roles[1][1])
     top_25_role = ctx.guild.get_role(top_roles[2][1])
-    
+
+    start_time = time.monotonic()
     # check rank 1 and see if there is a matching id
     wr_user_id = id_dict.get(key_list[0][1])
     # append top_3_id list with discord id's from id_dictionary
@@ -217,15 +218,22 @@ async def top_role_update(ctx):
     # append top_25_id list with discord id's from id_dictionary
     for x in key_list[10:25]:
         top_25_user_id.append(id_dict.get(x[1]))
-
+    print(f"     building lists of top role id's from id_dictionary took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    
+    start_time = time.monotonic()
     top_registered_users = []
     for x in key_list[0:100]:
+        # if game id exists
         if id_dict.get(x[1]) != None:
+            # grab their guild user data
             registered_user = ctx.guild.get_member(id_dict.get(x[1]))
+            # if that user data exists (ie: they are in the server), add them to the top_registered_useres list
             if registered_user != None:
                 top_registered_users.append(registered_user) 
-
+    print(f"     building list of top registered useres in HDPals took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    
     # remove roles from anyone not in top lists
+    start_time = time.monotonic()
     for user in top_registered_users:
         if wr_role in user.roles and user.id != wr_user_id:
             await user.remove_roles(wr_role)
@@ -235,7 +243,9 @@ async def top_role_update(ctx):
             await user.remove_roles(top_10_role)
         if top_25_role in user.roles and user.id not in top_25_user_id:
             await user.remove_roles(top_25_role)
+    print(f"     removing roles from anyone not in top roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
+    start_time = time.monotonic()
     # check wr id and update if necessary
     wr_user = ctx.guild.get_member(wr_user_id)
     if wr_user == None:
@@ -275,7 +285,9 @@ async def top_role_update(ctx):
         else:
             top_25_user = ctx.guild.get_member(user)
             await top_25_user.add_roles(top_25_role)
+    print(f"     checking and updating top rank user roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
+    start_time = time.monotonic()
     invoker_roles_after = op.roles
 
     before_set = set(invoker_roles_before)
@@ -305,7 +317,8 @@ async def top_role_update(ctx):
         for role in invoker_roles_before:
             if role not in invoker_roles_after:
                 removed_roles.append(role.id)
-    print(f"top_role update function took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(f"     comparing role sets of user took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(f"top_role update function took {round((time.monotonic() - total_start_time), 3)} seconds to execute")
     return added_roles, removed_roles
 
 # check for roles and new 400 pb's every 5 minutes
