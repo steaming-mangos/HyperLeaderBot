@@ -218,7 +218,7 @@ async def top_role_update(ctx):
     # append top_25_id list with discord id's from id_dictionary
     for x in key_list[10:25]:
         top_25_user_id.append(id_dict.get(x[1]))
-    print(f"     building lists of top role id's from id_dictionary took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(f"     building lists of top user id's from id_dictionary took {round((time.monotonic() - start_time), 3)} seconds to execute")
     
     start_time = time.monotonic()
     top_registered_users = []
