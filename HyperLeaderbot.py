@@ -230,7 +230,7 @@ async def top_role_update(ctx):
             # if that user data exists (ie: they are in the server), add them to the top_registered_useres list
             if registered_user != None:
                 top_registered_users.append(registered_user) 
-    print(f"     building list of top registered useres in HDPals took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(f"     building list of top registered users in HDPals took {round((time.monotonic() - start_time), 3)} seconds to execute")
     
     # remove roles from anyone not in top lists
     start_time = time.monotonic()
@@ -247,21 +247,22 @@ async def top_role_update(ctx):
 
     start_time = time.monotonic()
     # check wr id and update if necessary
-    wr_user = ctx.guild.get_member(wr_user_id)
-    if wr_user == None:
+    if wr_user_id == None:
         pass
-    elif ctx.guild.get_member(wr_user) is None:
+    elif ctx.guild.get_member(wr_user_id) is None:
             pass
     else:
         await wr_user.add_roles(wr_role)
 
     # check top 3 ids and update if necessary
     for user in top_3_user_id:
+        # first, check discord id value. If None, they have never been registered
         if user == None:
             pass
+        # this means that they have been registered, so next, check their member object. If they have left the server, it will return None
         elif ctx.guild.get_member(user) is None:
             pass
-        # assign user top 3 role
+        # finally, this means that the user is both registered, and in the server, so we should assign user top 3 role
         else:
             top_3_user = ctx.guild.get_member(user)
             await top_3_user.add_roles(top_3_role)
