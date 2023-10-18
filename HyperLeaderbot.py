@@ -223,11 +223,11 @@ async def top_role_update(ctx):
     start_time = time.monotonic()
     top_registered_users = []
     for x in key_list[0:100]:
-        # if game id exists
+        # get discord id from in game id, will return None if user is not registered
         if id_dict.get(x[1]) != None:
             # grab their guild user data
             registered_user = ctx.guild.get_member(id_dict.get(x[1]))
-            # if that user data exists (ie: they are in the server), add them to the top_registered_useres list
+            # if that user data exists (ie: they are in the server), add them to the top_registered_users list
             if registered_user != None:
                 top_registered_users.append(registered_user) 
     print(f"     building list of top registered users in HDPals took {round((time.monotonic() - start_time), 3)} seconds to execute")
