@@ -252,6 +252,7 @@ async def top_role_update(ctx):
     elif ctx.guild.get_member(wr_user_id) is None:
             pass
     else:
+        wr_user = ctx.guild.get_member(wr_user_id)
         await wr_user.add_roles(wr_role)
 
     # check top 3 ids and update if necessary
