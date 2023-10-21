@@ -308,6 +308,7 @@ async def on_message(message):
     start_time = time.monotonic()
 
     channel = bot.get_channel(CHANNEL_ID)
+    channel_log = bot.get_channel(1153802687054364673)
 
     # prevents infinite loop from bot responding to itself
     if message.author == bot.user:
@@ -423,5 +424,7 @@ async def on_message(message):
                 embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
             await message.channel.send(embed=embed_role_update)
     print(f"on demand function took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    await discord.channel_log.send(message.jump_url)
+    await discord.channel_log.send(f"Execution took {round((time.monotonic() - start_time), 3)*1000}ms.")
 
 bot.run(BOT_TOKEN)
