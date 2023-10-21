@@ -424,7 +424,7 @@ async def on_message(message):
                 embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
             await message.channel.send(embed=embed_role_update)
     print(f"on demand function took {round((time.monotonic() - start_time), 3)} seconds to execute")
-    await channel_log.send("message.jump_url")
+    await channel_log.send(message.jump_url)
     await channel_log.send(f"Execution took {round((time.monotonic() - start_time), 3)*1000}ms.")
 
 bot.run(BOT_TOKEN)
