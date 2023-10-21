@@ -219,8 +219,8 @@ async def top_role_update(ctx):
             # if that user data exists (ie: they are in the server), add them to the top_registered_users list
             if registered_user != None:
                 # Do role checks here!
-                found_role = False
                 for x in range(len(top_role_buckets)):   
+                    found_role = False
                     if rank <= top_role_buckets[x][0]:
                         # User is in this top player bucket, and should have the corresponding role
                         found_role = True
