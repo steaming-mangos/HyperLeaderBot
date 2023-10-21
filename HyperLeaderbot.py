@@ -197,97 +197,47 @@ async def top_role_update(ctx):
     with open("key_list.json", "r") as outfile:
         key_list = json.load(outfile)
 
-    top_3_user_id = []
-    top_10_user_id = []
-    top_25_user_id = []
-
     wr_role = ctx.guild.get_role(wr_role_id)
     top_3_role = ctx.guild.get_role(top_roles[0][1])
     top_10_role = ctx.guild.get_role(top_roles[1][1])
     top_25_role = ctx.guild.get_role(top_roles[2][1])
 
     start_time = time.monotonic()
-    # check rank 1 and see if there is a matching id
-    wr_user_id = id_dict.get(key_list[0][1])
-    # append top_3_id list with discord id's from id_dictionary
-    for x in key_list[1:3]:
-        top_3_user_id.append(id_dict.get(x[1]))
-    # append top_10_id list with discord id's from id_dictionary
-    for x in key_list[3:10]:
-        top_10_user_id.append(id_dict.get(x[1]))
-    # append top_25_id list with discord id's from id_dictionary
-    for x in key_list[10:25]:
-        top_25_user_id.append(id_dict.get(x[1]))
-    print(f"     building lists of top user id's from id_dictionary took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    top_role_buckets = [
+        [1, wr_role],
+        [3, top_3_role],
+        [10, top_10_role],
+        [25, top_25_role]
+        ]
     
-    start_time = time.monotonic()
-    top_registered_users = []
-    for x in key_list[0:100]:
+    for index, ele in enumerate(key_list[0:100]):
+        rank = index + 1
         # get discord id from in game id, will return None if user is not registered
-        if id_dict.get(x[1]) != None:
+        if id_dict.get(ele[1]) != None:
             # grab their guild user data
-            registered_user = ctx.guild.get_member(id_dict.get(x[1]))
+            registered_user = ctx.guild.get_member(id_dict.get(ele[1]))
             # if that user data exists (ie: they are in the server), add them to the top_registered_users list
             if registered_user != None:
-                top_registered_users.append(registered_user) 
-    print(f"     building list of top registered users in HDPals took {round((time.monotonic() - start_time), 3)} seconds to execute")
-    
-    # remove roles from anyone not in top lists
-    start_time = time.monotonic()
-    for user in top_registered_users:
-        if wr_role in user.roles and user.id != wr_user_id:
-            await user.remove_roles(wr_role)
-        if top_3_role in user.roles and user.id not in top_3_user_id:
-            await user.remove_roles(top_3_role)
-        if top_10_role in user.roles and user.id not in top_10_user_id:
-            await user.remove_roles(top_10_role)
-        if top_25_role in user.roles and user.id not in top_25_user_id:
-            await user.remove_roles(top_25_role)
-    print(f"     removing roles from anyone not in top roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
-
-    start_time = time.monotonic()
-    # check wr id and update if necessary
-    if wr_user_id == None:
-        pass
-    elif ctx.guild.get_member(wr_user_id) is None:
-            pass
-    else:
-        wr_user = ctx.guild.get_member(wr_user_id)
-        await wr_user.add_roles(wr_role)
-
-    # check top 3 ids and update if necessary
-    for user in top_3_user_id:
-        # first, check discord id value. If None, they have never been registered
-        if user == None:
-            pass
-        # this means that they have been registered, so next, check their member object. If they have left the server, it will return None
-        elif ctx.guild.get_member(user) is None:
-            pass
-        # finally, this means that the user is both registered, and in the server, so we should assign user top 3 role
-        else:
-            top_3_user = ctx.guild.get_member(user)
-            await top_3_user.add_roles(top_3_role)
-
-    # check top 10 ids and update if necessary
-    for user in top_10_user_id:
-        if user == None:
-            pass
-        elif ctx.guild.get_member(user) is None:
-            pass
-        else:
-            top_10_user = ctx.guild.get_member(user)
-            await top_10_user.add_roles(top_10_role)
-
-    # check top 25 ids and update if necessary
-    for user in top_25_user_id:
-        if user == None:
-            pass
-        elif ctx.guild.get_member(user) is None:
-            pass
-        else:
-            top_25_user = ctx.guild.get_member(user)
-            await top_25_user.add_roles(top_25_role)
-    print(f"     checking and updating top rank user roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
+                # Do role checks here!
+                found_role = False
+                for x in range(len(top_role_buckets)):   
+                    if rank <= top_role_buckets[x][0]:
+                        # User is in this top player bucket, and should have the corresponding role
+                        found_role = True
+                        correct_role = top_role_buckets[x][1]
+                        break
+                
+                if found_role == True and correct_role not in registered_user.roles:
+                    for role in registered_user.roles:
+                        if any(role in sublist for sublist in top_role_buckets):
+                            await registered_user.remove_roles(role)
+                            await registered_user.add_roles(correct_role)
+                elif found_role == False:
+                    # User is not in top 25, and should not have a top player role
+                    for role in registered_user.roles:
+                        if any(role in sublist for sublist in top_role_buckets):
+                            await registered_user.remove_roles(role)          
+    print(f"     building list of top registered users in HDPals and adjusting roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
     start_time = time.monotonic()
     invoker_roles_after = op.roles
