@@ -226,17 +226,21 @@ async def top_role_update(ctx):
                         found_role = True
                         correct_role = top_role_buckets[x][1]
                         break
-                
+                    elif rank > 25:
+                        correct_role = None
+                        break
+
                 if found_role == True and correct_role not in registered_user.roles:
                     for role in registered_user.roles:
                         if any(role in sublist for sublist in top_role_buckets):
                             await registered_user.remove_roles(role)
-                            await registered_user.add_roles(correct_role)
+                    await registered_user.add_roles(correct_role)
                 elif found_role == False:
                     # User is not in top 25, and should not have a top player role
                     for role in registered_user.roles:
                         if any(role in sublist for sublist in top_role_buckets):
                             await registered_user.remove_roles(role)          
+
     print(f"     building list of top registered users in HDPals and adjusting roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
 
     start_time = time.monotonic()
