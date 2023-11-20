@@ -228,7 +228,7 @@ async def top_role_update(ctx):
                         await registered_user.add_roles(extremely_close_role)
 
                 # check if user is above 400 and has close role, meaning they pb'd and need it removed
-                elif next_to_400 == False and extremely_close_role in registered_user.roles:
+                if next_to_400 == False and extremely_close_role in registered_user.roles:
                     await registered_user.remove_roles(extremely_close_role)
                     
                 # Do role checks here!
