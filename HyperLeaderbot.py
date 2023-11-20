@@ -201,6 +201,7 @@ async def top_role_update(ctx):
     top_3_role = ctx.guild.get_role(top_roles[0][1])
     top_10_role = ctx.guild.get_role(top_roles[1][1])
     top_25_role = ctx.guild.get_role(top_roles[2][1])
+    extremely_close_role = ctx.guild.get_role(1176214681325674526)
 
     start_time = time.monotonic()
     top_role_buckets = [
@@ -210,7 +211,9 @@ async def top_role_update(ctx):
         [25, top_25_role]
         ]
     
-    for index, ele in enumerate(key_list[0:100]):
+    next_to_400 = False
+    
+    for index, ele in enumerate(key_list[0:200]):
         rank = index + 1
         # get discord id from in game id, will return None if user is not registered
         if id_dict.get(ele[1]) != None:
@@ -218,6 +221,16 @@ async def top_role_update(ctx):
             registered_user = ctx.guild.get_member(id_dict.get(ele[1]))
             # if that user data exists (ie: they are in the server), add them to the top_registered_users list
             if registered_user != None:
+                # check if they are the registered user closest to getting 400
+                if next_to_400 == False and float(ele[0]) < 400:
+                    next_to_400 = True
+                    if extremely_close_role not in registered_user.roles:
+                        await registered_user.add_roles(extremely_close_role)
+
+                # check if user is above 400 and has close role, meaning they pb'd and need it removed
+                elif next_to_400 == False and extremely_close_role in registered_user.roles:
+                    await registered_user.remove_roles(extremely_close_role)
+                    
                 # Do role checks here!
                 for x in range(len(top_role_buckets)):   
                     found_role = False
@@ -241,8 +254,8 @@ async def top_role_update(ctx):
                         if any(role in sublist for sublist in top_role_buckets):
                             await registered_user.remove_roles(role)          
 
-    print(f"     building list of top registered users in HDPals and adjusting roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
-
+    print(f"     Adjusting top player roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    
     start_time = time.monotonic()
     invoker_roles_after = op.roles
 
