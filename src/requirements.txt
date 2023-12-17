@@ -1,0 +1,5 @@
+bs4
+discord
+Pillow
+aiohttp
+python-dotenv
