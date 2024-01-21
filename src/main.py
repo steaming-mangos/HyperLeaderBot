@@ -303,6 +303,12 @@ async def maintain_hdpals(channel):
 
 @bot.event
 async def on_ready():
+    
+    guilds = [guild async for guild in bot.fetch_guilds(limit=150)]
+    for guild in guilds:
+        bot.tree.copy_global_to(guild=discord.Object(id=guild.id))
+    await bot.tree.sync()
+    
     channel = bot.get_channel(1047631851193368697)
     #guild = bot.get_guild(1141412260217114694)
     #maintain_hdpals.start(channel, guild)
@@ -316,8 +322,8 @@ async def remove_role(source, oldroleid):
 async def add_role(source, newroleid):
     await source.interaction.user.add_roles(discord.utils.get(source.interaction.user.guild.roles, id = newroleid))
 
-@bot.command
-async def stats(ctx):
+@bot.tree.command(name="stats", description="shows user's stats")
+async def stats(ctx: discord.Interaction):
     # load the id dictionary
     with open("id_dictionary.json", "r") as outfile:
         id_dict = json.load(outfile)
