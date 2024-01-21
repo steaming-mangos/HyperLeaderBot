@@ -330,7 +330,7 @@ async def stats(ctx: discord.Interaction):
     # make dictionary bidirectional    
     id_lookup = bidict(id_dict)
     # grab users discord id
-    discord_id = ctx.author.id
+    discord_id = ctx.user.id
     # find game id using bidirectional dictionary
     game_id = id_lookup.inverse[discord_id]
     # open session with hyprd.mn
@@ -344,7 +344,7 @@ async def stats(ctx: discord.Interaction):
             else:
                 check_deicide = ":cross_mark:"
             # grab url of users discord pfp
-            user_avatar_url = ctx.author.display_avatar.url
+            user_avatar_url = ctx.user.display_avatar.url
             # convert playtime to seconds
             playtime_raw = round(user_stats['playtime']/10000)
             # find users playtime hours
@@ -358,7 +358,7 @@ async def stats(ctx: discord.Interaction):
             # set thumbnail for the stats embed object as the users discord pfp
             stats_embed.set_thumbnail(url=user_avatar_url)
             # send embed message of users stats
-            await ctx.send(embed=stats_embed)
+            await ctx.response.send_message(embed=stats_embed)
 
 # ran when a message is posted
 @bot.event
@@ -392,9 +392,14 @@ async def on_message(message):
         rank = int(description[0].split()[1].strip("*"))
 
         # update id dictionary
-        if rank <= 1000:
-            lb_dict = await get_shit()
-            update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
+        # if rank <= 1000:
+            # lb_dict = await get_shit()
+            # update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1') as resp:
+                user_lb_stats = await resp.json
+                update_dict(user_lb_stats[0]['user'], embed_op_id, 'id_dictionary.json')
 
         await lb_update()
         added_roles, removed_roles = await top_role_update(message)
