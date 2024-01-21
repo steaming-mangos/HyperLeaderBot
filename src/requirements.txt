@@ -3,3 +3,4 @@ discord
 Pillow
 aiohttp
 python-dotenv
+bidict

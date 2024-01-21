@@ -7,6 +7,8 @@ import shutil
 import datetime
 import asyncio
 import os
+from bidict import bidict
+import math
 from leaderboard_scraper import *
 from pb_img_gen import gen_pb
 
@@ -318,6 +320,44 @@ async def remove_role(source, oldroleid):
 async def add_role(source, newroleid):
     await source.interaction.user.add_roles(discord.utils.get(source.interaction.user.guild.roles, id = newroleid))
 
+@bot.command
+async def stats(ctx):
+    # load the id dictionary
+    with open("id_dictionary.json", "r") as outfile:
+        id_dict = json.load(outfile)
+    # make dictionary bidirectional    
+    id_lookup = bidict(id_dict)
+    # grab users discord id
+    discord_id = ctx.author.id
+    # find game id using bidirectional dictionary
+    game_id = id_lookup.inverse[discord_id]
+    # open session with hyprd.mn
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://hyprd.mn/backend_dev/get_user_public.php?id={game_id}') as resp:
+            # make local dict out of dict from hyprd.mn
+            user_stats = await resp.json()
+            # check if user has gotten deicide yet, then set check_deicide to corresponding emoji
+            if user_stats['deicide'] == 1:
+                check_deicide = ":white_check_mark:"
+            else:
+                check_deicide = ":cross_mark:"
+            # grab url of users discord pfp
+            user_avatar_url = ctx.author.display_avatar.url
+            # convert playtime to seconds
+            playtime_raw = round(user_stats['playtime']/10000)
+            # find users playtime hours
+            playtime_hours = math.floor(playtime_raw/3600)
+            # find users playtime minutes by subtracting the hours rounded down from the total hours, then multiplying by 60 
+            playtime_minutes = math.floor(((playtime_raw/3600)-(playtime_hours))*60)
+            # find users playtime seconds by subtracting the minutes rounded down from the total minutes, then multiplying by 60 
+            playtime_seconds = math.floor(((((playtime_raw/3600)-(playtime_hours))*60)-playtime_minutes)*60)
+            # create embed object for the stats command
+            stats_embed = discord.Embed(title=f"Stats for {user_stats['name']}", url=f"https://hyprd.mn/user/{game_id}", description=f"**Rank:** {user_stats['rank']}\n**Score:** {round(user_stats['score']/10000, 3):.3f}\n**Deaths:** {user_stats['deaths']}\n**Time Alive:** {playtime_hours}h {playtime_minutes}m {playtime_seconds}s\n**God Killer:** {check_deicide}")
+            # set thumbnail for the stats embed object as the users discord pfp
+            stats_embed.set_thumbnail(url=user_avatar_url)
+            # send embed message of users stats
+            await ctx.send(embed=stats_embed)
+
 # ran when a message is posted
 @bot.event
 async def on_message(message):
@@ -344,7 +384,7 @@ async def on_message(message):
         description = embed_description.splitlines()
 
         # parse embed information and store variables
-        score_new = round(float(description[1].split()[1].strip("*")), 3)
+        score_new = +(float(description[1].split()[1].strip("*")), 3)
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
         score_old = round(score_new-score_dif, 3)
         rank = int(description[0].split()[1].strip("*"))
