@@ -103,7 +103,6 @@ async def lb_update():
 
 
 # 400 post function
-@bot.command()
 async def auto_400_post(hdnews: discord.channel):
     start_time = time.monotonic()
     # post format
@@ -185,7 +184,6 @@ async def auto_400_post(hdnews: discord.channel):
 
 
 # role update function
-@bot.command()
 async def top_role_update(ctx):
     total_start_time = time.monotonic()
 
@@ -311,12 +309,10 @@ async def on_ready():
     maintain_hdpals.start(channel)
 
 # function for adding a role
-@bot.command()
 async def remove_role(source, oldroleid):
     await source.interaction.user.remove_roles(discord.utils.get(source.interaction.user.guild.roles, id = oldroleid))
 
 # function for removing a role
-@bot.command()
 async def add_role(source, newroleid):
     await source.interaction.user.add_roles(discord.utils.get(source.interaction.user.guild.roles, id = newroleid))
 
