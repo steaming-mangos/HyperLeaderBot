@@ -1,2 +1,13 @@
-src/.env
+# python venv
 .venv
+
+# cached binaries
+__pycache__
+
+# user config
+src/.env
+
+# application managed
+src/id_dictionary.json
+src/key_list.json
+src/lb_dict_example.json
