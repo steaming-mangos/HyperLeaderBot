@@ -1,6 +1,6 @@
+aiohttp
+bidict
 bs4
 discord
 Pillow
-aiohttp
 python-dotenv
-bidict
