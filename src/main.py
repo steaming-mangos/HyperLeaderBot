@@ -386,7 +386,7 @@ async def on_message(message):
         description = embed_description.splitlines()
 
         # parse embed information and store variables
-        score_new = +(float(description[1].split()[1].strip("*")), 3)
+        score_new = round(float(description[1].split()[1].strip("*")), 3)
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
         score_old = round(score_new-score_dif, 3)
         rank = int(description[0].split()[1].strip("*"))
@@ -398,7 +398,7 @@ async def on_message(message):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1') as resp:
-                user_lb_stats = await resp.json
+                user_lb_stats = await resp.json()
                 update_dict(user_lb_stats[0]['user'], embed_op_id, 'id_dictionary.json')
 
         await lb_update()
