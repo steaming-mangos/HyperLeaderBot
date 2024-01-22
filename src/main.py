@@ -4,18 +4,15 @@ import discord
 import json
 import time
 import shutil
-import datetime
-import asyncio
 import os
 from bidict import bidict
-import math
 from leaderboard_scraper import *
 from pb_img_gen import gen_pb
 
 load_dotenv()
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-    
+
 CHANNEL_ID = 0
 intents = discord.Intents.default()
 intents.message_content = True
@@ -42,18 +39,19 @@ role_array = [
     [410, 1054220979796197406],
     [415, 1054220981088039052],
     [420, 1054220981994004520],
-    [425, 1144733410728890369]
-    ]
+    [425, 1144733410728890369],
+]
 
 top_roles = [
     ["Top 3", 1142897619379695707],
     ["Top 10", 1142897869439893526],
-    ["Top 25", 1142897909029945394]
+    ["Top 25", 1142897909029945394],
 ]
 
 wr_role_id = 1142895896372203550
 
 bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
+
 
 def update_dict(key, value, source_dict):
     with open(source_dict, "r") as json_file:
@@ -65,41 +63,45 @@ def update_dict(key, value, source_dict):
     with open(source_dict, "w") as json_file:
         json.dump(my_dict, json_file)
 
+
 def ordinal(value):
-    ordval = f'{value}'
-    if value % 100//10 != 1:
+    ordval = f"{value}"
+    if value % 100 // 10 != 1:
         if value % 10 == 1:
-            ordval += 'st'
+            ordval += "st"
         elif value % 10 == 2:
-            ordval += 'nd'
+            ordval += "nd"
         elif value % 10 == 3:
-            ordval += 'rd'
+            ordval += "rd"
         else:
-            ordval += 'th'
+            ordval += "th"
     else:
-        ordval += 'th'
+        ordval += "th"
 
     return ordval
+
 
 # leaderboard update funtion
 async def lb_update():
     start_time = time.monotonic()
-    #set old leaderboard as new one
-    shutil.copyfile('lb_dict_new.json', 'lb_dict_old.json')
+    # set old leaderboard as new one
+    shutil.copyfile("lb_dict_new.json", "lb_dict_old.json")
 
     lb_dict = await get_shit()
     key_list = []
     for x in lb_dict:
-        key_list.append([lb_dict[x]['score'], x])
+        key_list.append([lb_dict[x]["score"], x])
 
     # update the new leaderboard dict
     with open("lb_dict_new.json", "w") as outfile:
         json.dump(lb_dict, outfile)
-    
-    # update the key list 
+
+    # update the key list
     with open("key_list.json", "w") as outfile:
         json.dump(key_list, outfile)
-    print(f"lb update took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(
+        f"lb update took {round((time.monotonic() - start_time), 3)} seconds to execute"
+    )
 
 
 # 400 post function
@@ -123,8 +125,9 @@ async def auto_400_post(hdnews: discord.channel):
     while float(key_list[x][0]) >= 400:
         user_key = key_list[x][1]
         # check if there is a new PB
-        if round(float(lb_dict_new[user_key]["score"]), 4) > round(float(lb_dict_old[user_key]["score"]), 4):
-
+        if round(float(lb_dict_new[user_key]["score"]), 4) > round(
+            float(lb_dict_old[user_key]["score"]), 4
+        ):
             # need to pull @username, new score, old score, change in score, rank changed, if new 400 player]]
             user_id = id_dict.get(key_list[x][1])
             username = lb_dict_new[user_key]["username"]
@@ -135,7 +138,7 @@ async def auto_400_post(hdnews: discord.channel):
             score_dif = round((score_new - score_old), 3)
             rank_change = rank_old - rank_new
             howmany400 = int
-            
+
             if score_old < 400:
                 new_400 = True
                 score_list = [sublist[0] for sublist in key_list]
@@ -153,34 +156,61 @@ async def auto_400_post(hdnews: discord.channel):
             else:
                 ranks = "ranks"
 
-            score_new = format(score_new, '.3f')
-            score_old = format(score_old, '.3f')
-            score_dif = format(score_dif, '.3f')
+            score_new = format(score_new, ".3f")
+            score_old = format(score_old, ".3f")
+            score_dif = format(score_dif, ".3f")
 
             # send news post
             if new_wr == True:
-                gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                pb_img = discord.File('400_test_image.png')
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. It's a new WR! :crown::tada:", file = pb_img)
+                gen_pb(
+                    "400_test_image.png", str(rank_new), str(username), str(score_new)
+                )
+                pb_img = discord.File("400_test_image.png")
+                await hdnews.send(
+                    f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. It's a new WR! :crown::tada:",
+                    file=pb_img,
+                )
             elif user_id == None and new_400 == False:
-                gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                pb_img = discord.File('400_test_image.png')
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.", file = pb_img)
+                gen_pb(
+                    "400_test_image.png", str(rank_new), str(username), str(score_new)
+                )
+                pb_img = discord.File("400_test_image.png")
+                await hdnews.send(
+                    f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.",
+                    file=pb_img,
+                )
             elif user_id == None and new_400 == True:
-                gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                pb_img = discord.File('400_test_image.png')
-                await hdnews.send(f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!", file = pb_img)
+                gen_pb(
+                    "400_test_image.png", str(rank_new), str(username), str(score_new)
+                )
+                pb_img = discord.File("400_test_image.png")
+                await hdnews.send(
+                    f"Congratulations to {username} for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!",
+                    file=pb_img,
+                )
             elif user_id != None and new_400 == False:
-                gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                pb_img = discord.File('400_test_image.png')
-                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.", file = pb_img)               
+                gen_pb(
+                    "400_test_image.png", str(rank_new), str(username), str(score_new)
+                )
+                pb_img = discord.File("400_test_image.png")
+                await hdnews.send(
+                    f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}.",
+                    file=pb_img,
+                )
             elif user_id != None and new_400 == True:
-                gen_pb('400_test_image.png', str(rank_new), str(username), str(score_new))
-                pb_img = discord.File('400_test_image.png')
-                await hdnews.send(f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!", file = pb_img)
-            
+                gen_pb(
+                    "400_test_image.png", str(rank_new), str(username), str(score_new)
+                )
+                pb_img = discord.File("400_test_image.png")
+                await hdnews.send(
+                    f"Congratulations to <@{user_id}> for getting a new PB of {score_new}! They beat their old PB of {score_old} (+{score_dif}), gaining {rank_change} {ranks}. They are the {ordinal(howmany400)} 400 player!",
+                    file=pb_img,
+                )
+
         x += 1
-    print(f"400_post_update function took {round((time.monotonic() - start_time), 3)} seconds to execute")
+    print(
+        f"400_post_update function took {round((time.monotonic() - start_time), 3)} seconds to execute"
+    )
 
 
 # role update function
@@ -211,11 +241,11 @@ async def top_role_update(ctx):
         [1, wr_role],
         [3, top_3_role],
         [10, top_10_role],
-        [25, top_25_role]
-        ]
-    
+        [25, top_25_role],
+    ]
+
     next_to_400 = False
-    
+
     for index, ele in enumerate(key_list[0:200]):
         rank = index + 1
         # get discord id from in game id, will return None if user is not registered
@@ -231,11 +261,14 @@ async def top_role_update(ctx):
                         await registered_user.add_roles(extremely_close_role)
 
                 # check if user is above 400 and has close role, meaning they pb'd and need it removed
-                if next_to_400 == False and extremely_close_role in registered_user.roles:
+                if (
+                    next_to_400 == False
+                    and extremely_close_role in registered_user.roles
+                ):
                     await registered_user.remove_roles(extremely_close_role)
-                    
+
                 # Do role checks here!
-                for x in range(len(top_role_buckets)):   
+                for x in range(len(top_role_buckets)):
                     found_role = False
                     if rank <= top_role_buckets[x][0]:
                         # User is in this top player bucket, and should have the corresponding role
@@ -255,10 +288,12 @@ async def top_role_update(ctx):
                     # User is not in top 25, and should not have a top player role
                     for role in registered_user.roles:
                         if any(role in sublist for sublist in top_role_buckets):
-                            await registered_user.remove_roles(role)          
+                            await registered_user.remove_roles(role)
 
-    print(f"     Adjusting top player roles took {round((time.monotonic() - start_time), 3)} seconds to execute")
-    
+    print(
+        f"     Adjusting top player roles took {round((time.monotonic() - start_time), 3)} seconds to execute"
+    )
+
     start_time = time.monotonic()
     invoker_roles_after = op.roles
 
@@ -289,76 +324,94 @@ async def top_role_update(ctx):
         for role in invoker_roles_before:
             if role not in invoker_roles_after:
                 removed_roles.append(role.id)
-    print(f"     comparing role sets of user took {round((time.monotonic() - start_time), 3)} seconds to execute")
-    print(f"top_role update function took {round((time.monotonic() - total_start_time), 3)} seconds to execute")
+    print(
+        f"     comparing role sets of user took {round((time.monotonic() - start_time), 3)} seconds to execute"
+    )
+    print(
+        f"top_role update function took {round((time.monotonic() - total_start_time), 3)} seconds to execute"
+    )
     return added_roles, removed_roles
 
+
 # check for roles and new 400 pb's every 5 minutes
-@tasks.loop(minutes = 5)
+@tasks.loop(minutes=5)
 async def maintain_hdpals(channel):
-#async def maintain_hdpals(channel, guild):
+    # async def maintain_hdpals(channel, guild):
     await lb_update()
-    #await top_role_update(guild)
+    # await top_role_update(guild)
     await auto_400_post(channel)
+
 
 @bot.event
 async def on_ready():
-    
     guilds = [guild async for guild in bot.fetch_guilds(limit=150)]
     for guild in guilds:
         bot.tree.copy_global_to(guild=discord.Object(id=guild.id))
     await bot.tree.sync()
-    
+
     channel = bot.get_channel(1047631851193368697)
-    #guild = bot.get_guild(1141412260217114694)
-    #maintain_hdpals.start(channel, guild)
+    # guild = bot.get_guild(1141412260217114694)
+    # maintain_hdpals.start(channel, guild)
     maintain_hdpals.start(channel)
+
 
 # function for adding a role
 async def remove_role(source, oldroleid):
-    await source.interaction.user.remove_roles(discord.utils.get(source.interaction.user.guild.roles, id = oldroleid))
+    await source.interaction.user.remove_roles(
+        discord.utils.get(source.interaction.user.guild.roles, id=oldroleid)
+    )
+
 
 # function for removing a role
 async def add_role(source, newroleid):
-    await source.interaction.user.add_roles(discord.utils.get(source.interaction.user.guild.roles, id = newroleid))
+    await source.interaction.user.add_roles(
+        discord.utils.get(source.interaction.user.guild.roles, id=newroleid)
+    )
+
 
 @bot.tree.command(name="stats", description="shows user's stats")
-async def stats(ctx: discord.Interaction):
+async def stats(
+    interaction: discord.Interaction,
+    player: discord.Member = None,
+):
+    if not player:
+        player = interaction.user
+
     # load the id dictionary
     with open("id_dictionary.json", "r") as outfile:
         id_dict = json.load(outfile)
-    # make dictionary bidirectional    
     id_lookup = bidict(id_dict)
-    # grab users discord id
-    discord_id = ctx.user.id
-    # find game id using bidirectional dictionary
-    game_id = id_lookup.inverse[discord_id]
+    game_id = id_lookup.inverse[player.id]
+
     # open session with hyprd.mn
     async with aiohttp.ClientSession() as session:
-        async with session.get(f'https://hyprd.mn/backend_dev/get_user_public.php?id={game_id}') as resp:
+        async with session.get(
+            f"https://hyprd.mn/backend_dev/get_user_public.php?id={game_id}"
+        ) as resp:
             # make local dict out of dict from hyprd.mn
             user_stats = await resp.json()
             # check if user has gotten deicide yet, then set check_deicide to corresponding emoji
-            if user_stats['deicide'] == 1:
+            if user_stats["deicide"] == 1:
                 check_deicide = ":white_check_mark:"
             else:
                 check_deicide = ":cross_mark:"
-            # grab url of users discord pfp
-            user_avatar_url = ctx.user.display_avatar.url
-            # convert playtime to seconds
-            playtime_raw = round(user_stats['playtime']/10000)
-            # find users playtime hours
-            playtime_hours = math.floor(playtime_raw/3600)
-            # find users playtime minutes by subtracting the hours rounded down from the total hours, then multiplying by 60 
-            playtime_minutes = math.floor(((playtime_raw/3600)-(playtime_hours))*60)
-            # find users playtime seconds by subtracting the minutes rounded down from the total minutes, then multiplying by 60 
-            playtime_seconds = math.floor(((((playtime_raw/3600)-(playtime_hours))*60)-playtime_minutes)*60)
+            # parse playtime
+            playtime_s = round(user_stats["playtime"] / 10000)
+            playtime_m = round((playtime_s - playtime_s % 60) / 60)
+            playtime_h = round((playtime_m - playtime_m % 60) / 60)
             # create embed object for the stats command
-            stats_embed = discord.Embed(title=f"Stats for {user_stats['name']}", url=f"https://hyprd.mn/user/{game_id}", description=f"**Rank:** {user_stats['rank']}\n**Score:** {round(user_stats['score']/10000, 3):.3f}\n**Deaths:** {user_stats['deaths']}\n**Time Alive:** {playtime_hours}h {playtime_minutes}m {playtime_seconds}s\n**God Killer:** {check_deicide}")
-            # set thumbnail for the stats embed object as the users discord pfp
-            stats_embed.set_thumbnail(url=user_avatar_url)
-            # send embed message of users stats
-            await ctx.response.send_message(embed=stats_embed)
+            stats_embed = discord.Embed(
+                title=f"Stats for {user_stats['name']}",
+                url=f"https://hyprd.mn/user/{game_id}",
+                description=f"**Rank:** {user_stats['rank']}\n"
+                + f"**Score:** {round(user_stats['score']/10000, 3):.3f}\n"
+                + f"**Deaths:** {user_stats['deaths']}\n"
+                + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
+                + f"**God Killer:** {check_deicide}",
+            )
+            stats_embed.set_thumbnail(url=player.display_avatar.url)
+            await interaction.response.send_message(embed=stats_embed)
+
 
 # ran when a message is posted
 @bot.event
@@ -373,13 +426,15 @@ async def on_message(message):
         return
 
     # register command
-    #if message.content.startswith('register'):
-        #register_id = str(message.content.split()[1])
-        #update_dict(register_id, message.author.id, 'id_dictionary.json')
+    # if message.content.startswith('register'):
+    # register_id = str(message.content.split()[1])
+    # update_dict(register_id, message.author.id, 'id_dictionary.json')
 
     # checks if message is from SORATH bot, and it is the "/hyperdemon pb" command
-    if message.author.id == 798042141988618251 and message.interaction.name == "hyperdemon pb":
-
+    if (
+        message.author.id == 798042141988618251
+        and message.interaction.name == "hyperdemon pb"
+    ):
         embed_description = message.embeds[0].description
         embed_op_id = int(message.interaction.user.id)
         embed_type = message.interaction.name
@@ -388,18 +443,20 @@ async def on_message(message):
         # parse embed information and store variables
         score_new = round(float(description[1].split()[1].strip("*")), 3)
         score_dif = round(float(description[1].split()[2].strip("()+")), 3)
-        score_old = round(score_new-score_dif, 3)
+        score_old = round(score_new - score_dif, 3)
         rank = int(description[0].split()[1].strip("*"))
 
         # update id dictionary
         # if rank <= 1000:
-            # lb_dict = await get_shit()
-            # update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
+        # lb_dict = await get_shit()
+        # update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(f'https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1') as resp:
+            async with session.get(
+                f"https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1"
+            ) as resp:
                 user_lb_stats = await resp.json()
-                update_dict(user_lb_stats[0]['user'], embed_op_id, 'id_dictionary.json')
+                update_dict(user_lb_stats[0]["user"], embed_op_id, "id_dictionary.json")
 
         await lb_update()
         added_roles, removed_roles = await top_role_update(message)
@@ -411,7 +468,7 @@ async def on_message(message):
             for score_role_pair in role_array:
                 if user_role.id == score_role_pair[1]:
                     old_role_id = user_role.id
-        
+
         # find users new role
         # check if score is below 0
         if score_new < 0:
@@ -426,44 +483,60 @@ async def on_message(message):
         # determine which role is correct for new score
         else:
             x = 1
-            while not (score_new >= role_array[x][0] and score_new < role_array[x+1][0]):
+            while not (
+                score_new >= role_array[x][0] and score_new < role_array[x + 1][0]
+            ):
                 x += 1
             else:
                 new_role_id = role_array[x][1]
-                next_score = role_array[x+1]
+                next_score = role_array[x + 1]
 
         # check if this is their first time triggering bot and update role
         if old_role_id == "no score assigned":
             await add_role(message, new_role_id)
             added_roles.append(new_role_id)
-            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            embed_role_update = discord.Embed(
+                title=f"Updated roles for {message.interaction.user.name}"
+            )
             if added_roles != []:
                 addstring = f""
                 for addedroleid in added_roles:
                     addstring = f"{addstring}<@&{addedroleid}>\n"
-                embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
+                embed_role_update.add_field(
+                    name="**Added:**", value=addstring, inline=True
+                )
             await message.channel.send(embed=embed_role_update)
-        
+
         # check if new role is the same as old role and do nothing
         elif old_role_id == new_role_id:
-            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            embed_role_update = discord.Embed(
+                title=f"Updated roles for {message.interaction.user.name}"
+            )
             if removed_roles != []:
                 removestring = f""
                 for removedroleid in removed_roles:
                     removestring = f"{removestring}<@&{removedroleid}>\n"
-                embed_role_update.add_field(name="**Removed:**", value=removestring, inline=True)
+                embed_role_update.add_field(
+                    name="**Removed:**", value=removestring, inline=True
+                )
             if added_roles != []:
                 addstring = f""
                 for addedroleid in added_roles:
                     addstring = f"{addstring}<@&{addedroleid}>\n"
-                embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
+                embed_role_update.add_field(
+                    name="**Added:**", value=addstring, inline=True
+                )
             if added_roles != [] or removed_roles != []:
                 await message.channel.send(embed=embed_role_update)
             if next_score != []:
-                dist_next_role = round(next_score[0]-score_new, 3)
-                await message.channel.send(f"You're **{dist_next_role}** points away from the next role: <@&{next_score[1]}>")
+                dist_next_role = round(next_score[0] - score_new, 3)
+                await message.channel.send(
+                    f"You're **{dist_next_role}** points away from the next role: <@&{next_score[1]}>"
+                )
             else:
-                await message.channel.send(f"You are a god, {message.interaction.user.name}. No higher role left")
+                await message.channel.send(
+                    f"You are a god, {message.interaction.user.name}. No higher role left"
+                )
 
         # replace old role with new role
         else:
@@ -474,20 +547,31 @@ async def on_message(message):
             await add_role(message, new_role_id)
             added_roles.append(new_role_id)
             # post embed with role changes
-            embed_role_update = discord.Embed(title=f"Updated roles for {message.interaction.user.name}")
+            embed_role_update = discord.Embed(
+                title=f"Updated roles for {message.interaction.user.name}"
+            )
             if removed_roles != []:
                 removestring = f""
                 for removedroleid in removed_roles:
                     removestring = f"{removestring}<@&{removedroleid}>\n"
-                embed_role_update.add_field(name="**Removed:**", value=removestring, inline=True)
+                embed_role_update.add_field(
+                    name="**Removed:**", value=removestring, inline=True
+                )
             if added_roles != []:
                 addstring = f""
                 for addedroleid in added_roles:
                     addstring = f"{addstring}<@&{addedroleid}>\n"
-                embed_role_update.add_field(name="**Added:**", value=addstring, inline=True)
+                embed_role_update.add_field(
+                    name="**Added:**", value=addstring, inline=True
+                )
             await message.channel.send(embed=embed_role_update)
-        print(f"on demand function took {round((time.monotonic() - start_time), 3)} seconds to execute")
+        print(
+            f"on demand function took {round((time.monotonic() - start_time), 3)} seconds to execute"
+        )
         await channel_log.send(message.jump_url)
-        await channel_log.send(f"Execution took {round((time.monotonic() - start_time)*1000)}ms")
+        await channel_log.send(
+            f"Execution took {round((time.monotonic() - start_time)*1000)}ms"
+        )
+
 
 bot.run(BOT_TOKEN)
