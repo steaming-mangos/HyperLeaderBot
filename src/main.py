@@ -5,15 +5,15 @@ import json
 import time
 import shutil
 import os
+import requests
 from bidict import bidict
-from leaderboard_scraper import *
+from leaderboard_scraper import scrape_hyprdm_lb
 from pb_img_gen import gen_pb
 
 load_dotenv()
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
-CHANNEL_ID = 0
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -87,7 +87,7 @@ async def lb_update():
     # set old leaderboard as new one
     shutil.copyfile("lb_dict_new.json", "lb_dict_old.json")
 
-    lb_dict = await get_shit()
+    lb_dict = scrape_hyprdm_lb()
     key_list = []
     for x in lb_dict:
         key_list.append([lb_dict[x]["score"], x])
@@ -350,8 +350,6 @@ async def on_ready():
     await bot.tree.sync()
 
     channel = bot.get_channel(1047631851193368697)
-    # guild = bot.get_guild(1141412260217114694)
-    # maintain_hdpals.start(channel, guild)
     maintain_hdpals.start(channel)
 
 
@@ -369,6 +367,16 @@ async def add_role(source, newroleid):
     )
 
 
+async def notify_user_nonexist(interaction: discord.Interaction, user: discord.Member):
+    embed = discord.Embed(
+        description=f"Have {'you' if user == interaction.user else 'they'} "
+        + "used `/hyperdemon pb`?"
+    )
+    embed.set_author(name=f"Nothing tracked for {user.display_name}!")
+    embed.set_thumbnail(url=user.display_avatar.url)
+    await interaction.response.send_message(embed=embed)
+
+
 @bot.tree.command(name="stats", description="shows user's stats")
 async def stats(
     interaction: discord.Interaction,
@@ -381,54 +389,48 @@ async def stats(
     with open("id_dictionary.json", "r") as outfile:
         id_dict = json.load(outfile)
     id_lookup = bidict(id_dict)
-    game_id = id_lookup.inverse[player.id]
 
-    # open session with hyprd.mn
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"https://hyprd.mn/backend_dev/get_user_public.php?id={game_id}"
-        ) as resp:
-            # make local dict out of dict from hyprd.mn
-            user_stats = await resp.json()
-            # check if user has gotten deicide yet, then set check_deicide to corresponding emoji
-            if user_stats["deicide"] == 1:
-                check_deicide = ":white_check_mark:"
-            else:
-                check_deicide = ":cross_mark:"
-            # parse playtime
-            playtime_s = round(user_stats["playtime"] / 10000)
-            playtime_m = round((playtime_s - playtime_s % 60) / 60)
-            playtime_h = round((playtime_m - playtime_m % 60) / 60)
-            # create embed object for the stats command
-            stats_embed = discord.Embed(
-                title=f"Stats for {user_stats['name']}",
-                url=f"https://hyprd.mn/user/{game_id}",
-                description=f"**Rank:** {user_stats['rank']}\n"
-                + f"**Score:** {round(user_stats['score']/10000, 3):.3f}\n"
-                + f"**Deaths:** {user_stats['deaths']}\n"
-                + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
-                + f"**God Killer:** {check_deicide}",
-            )
-            stats_embed.set_thumbnail(url=player.display_avatar.url)
-            await interaction.response.send_message(embed=stats_embed)
+    try:
+        game_id = id_lookup.inverse[player.id]
+    except KeyError:
+        await notify_user_nonexist(interaction, player)
+        # nothing to do
+        return
+
+    user_stats = requests.get(
+        f"https://hyprd.mn/backend_dev/get_user_public.php?id={game_id}"
+    ).json()
+
+    # check if user has gotten deicide yet, then set check_deicide to corresponding emoji
+    if user_stats["deicide"] == 1:
+        check_deicide = ":white_check_mark:"
+    else:
+        check_deicide = ":cross_mark:"
+    # parse playtime
+    playtime_s = round(user_stats["playtime"] / 10000)
+    playtime_m = round((playtime_s - playtime_s % 60) / 60)
+    playtime_h = round((playtime_m - playtime_m % 60) / 60)
+    # create embed object for the stats command
+    stats_embed = discord.Embed(
+        title=f"Stats for {user_stats['name']}",
+        url=f"https://hyprd.mn/user/{game_id}",
+        description=f"**Rank:** {user_stats['rank']}\n"
+        + f"**Score:** {round(user_stats['score']/10000, 3):.3f}\n"
+        + f"**Deaths:** {user_stats['deaths']}\n"
+        + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
+        + f"**God Killer:** {check_deicide}",
+    )
+    stats_embed.set_thumbnail(url=player.display_avatar.url)
+    await interaction.response.send_message(embed=stats_embed)
 
 
-# ran when a message is posted
 @bot.event
-async def on_message(message):
-    start_time = time.monotonic()
-
-    channel = bot.get_channel(CHANNEL_ID)
-    channel_log = bot.get_channel(1153802687054364673)
-
-    # prevents infinite loop from bot responding to itself
+async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
 
-    # register command
-    # if message.content.startswith('register'):
-    # register_id = str(message.content.split()[1])
-    # update_dict(register_id, message.author.id, 'id_dictionary.json')
+    start_time = time.monotonic()
+    channel_log = bot.get_channel(1153802687054364673)
 
     # checks if message is from SORATH bot, and it is the "/hyperdemon pb" command
     if (
@@ -437,7 +439,6 @@ async def on_message(message):
     ):
         embed_description = message.embeds[0].description
         embed_op_id = int(message.interaction.user.id)
-        embed_type = message.interaction.name
         description = embed_description.splitlines()
 
         # parse embed information and store variables
@@ -448,15 +449,14 @@ async def on_message(message):
 
         # update id dictionary
         # if rank <= 1000:
-        # lb_dict = await get_shit()
+        # lb_dict = await scrape_hyprdm_lb()
         # update_dict(list(lb_dict.keys())[rank-1], embed_op_id, 'id_dictionary.json')
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1"
-            ) as resp:
-                user_lb_stats = await resp.json()
-                update_dict(user_lb_stats[0]["user"], embed_op_id, "id_dictionary.json")
+        user_lb_stats = requests.get(
+            f"https://hyprd.mn/backend_dev/get_scores_public.php?start={rank-1}&count=1"
+        ).json()
+
+        update_dict(user_lb_stats[0]["user"], embed_op_id, "id_dictionary.json")
 
         await lb_update()
         added_roles, removed_roles = await top_role_update(message)

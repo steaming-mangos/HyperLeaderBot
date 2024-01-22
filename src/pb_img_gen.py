@@ -1,18 +1,19 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 
+
 def gen_pb(filename, rank, username, score):
-    #Draw a text on an Image, saves it, show it
-    Tinos = ImageFont.truetype('Tinos-Regular.ttf', 52)
+    # Draw a text on an Image, saves it, show it
+    Tinos = ImageFont.truetype("Tinos-Regular.ttf", 52)
     # sorath eye open
-    eye = Image.open('sorath_eye.png')
+    eye = Image.open("sorath_eye.png")
     # sorath eye copy
     eyecopy = eye.copy()
     # create image
-    image = Image.new(mode = "RGB", size = [1100, 84])
+    image = Image.new(mode="RGB", size=[1100, 84])
     draw = ImageDraw.Draw(image)
 
-    user_x_initial = 100 
+    user_x_initial = 100
     min_dist_rank_user = 28
     char_width = 24
 
