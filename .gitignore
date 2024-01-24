@@ -11,4 +11,10 @@ src/.env
 src/id_dictionary.json
 src/key_list.json
 src/lb_dict_example.json
+<<<<<<< HEAD
 .DS_Store
+=======
+src/lb_dict_old.json
+src/lb_dict_new.json
+src/400_test_image.png
+>>>>>>> d34b9f3d05b08110973e795bafd3a44273cd1b93
