@@ -11,10 +11,7 @@ src/.env
 src/id_dictionary.json
 src/key_list.json
 src/lb_dict_example.json
-
 .DS_Store
-
 src/lb_dict_old.json
 src/lb_dict_new.json
 src/400_test_image.png
-
