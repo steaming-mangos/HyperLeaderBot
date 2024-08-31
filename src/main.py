@@ -13,6 +13,7 @@ from pb_img_gen import gen_pb
 load_dotenv()
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+cache = state.State()
 
 CHANNEL_ID = 0
 intents = discord.Intents.default()
@@ -52,7 +53,6 @@ top_roles = [
 wr_role_id = 1142895896372203550
 
 bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
-cache = state.State(bot)
 
 
 def update_dict(key, value, source_dict):
@@ -355,7 +355,7 @@ async def on_ready():
     # guild = bot.get_guild(1141412260217114694)
     # maintain_hdpals.start(channel, guild)
     maintain_hdpals.start(channel)
-
+    await cache.attach(bot)
 
 # function for adding a role
 async def remove_role(source, oldroleid):
@@ -444,8 +444,8 @@ async def queue(
         # create embed object for the queue command
         for index, item in enumerate(queue_userids):
             rank = index + 1
-            user = cache.get_user(item)
-            description_string += f"{rank:02d} | {user}\n"
+            user = await cache.get_user(item)
+            description_string += f"{rank:02d} | {user['name']}\n"
         description_string += f"```"
         queue_embed = discord.Embed(
             title=f"Current Multiplayer Queue", description=description_string
@@ -454,7 +454,7 @@ async def queue(
 
 
 @bot.tree.command(
-    name="queue reminder",
+    name="remindme",
     description="Pings you when you are 1 spot away from playing on the queue",
 )
 async def reminder(interaction: discord.Interaction):
@@ -463,7 +463,7 @@ async def reminder(interaction: discord.Interaction):
     id_lookup = bidict(id_dict)
     userid = id_lookup.inverse[interaction.user.id]
 
-    user_was_added_to_reminders = cache.add_user_to_queue_reminders(userid)
+    user_was_added_to_reminders = await cache.add_user_to_queue_reminders(userid)
 
     if user_was_added_to_reminders:
         await interaction.response.send_message(

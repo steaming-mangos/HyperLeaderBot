@@ -15,16 +15,17 @@ class State:
 
     bot: DiscordBot
 
-    def __init__(self, bot: DiscordBot):
-        asyncio.run(self.__queue_tick())
+    async def attach(self, bot: DiscordBot):
         self.bot = bot
+        asyncio.ensure_future(self.__queue_tick())
 
     async def add_user_to_queue_reminders(self, user_id: int) -> bool:
         # returns: bool :: whether the user was added to the queue
         # (false = already asked to be reminded)
-        self.__refresh_queue()
-
-        if len(self.queue_userids) < 3 or user_id in self.queue_users_to_remind:
+        await self.__refresh_queue()
+        
+        queue_is_big_enough = (len(self.queue_userids) > 2)
+        if not queue_is_big_enough or user_id in self.queue_users_to_remind or user_id not in self.queue_userids:
             return False
 
         self.queue_users_to_remind.append(user_id)
@@ -42,6 +43,7 @@ class State:
                     queue_list.append(int_val)
                     raw_queue = await resp.content.read(4)
                 self.queue_userids = queue_list[queue_userids_offset:]
+                print(self.queue_userids)
 
     async def __queue_tick(self) -> None:
         QUEUE_REMINDER_CHANNEL = self.bot.fetch_channel(self.queue_reminder_channel)
@@ -52,7 +54,7 @@ class State:
                 with open("id_dictionary.json", "r") as outfile:
                     id_dict = json.load(outfile)
 
-                self.__refresh_queue()
+                await self.__refresh_queue()
 
                 if len(self.queue_userids) < 3:
                     self.queue_users_to_remind = (
@@ -72,7 +74,7 @@ class State:
                         )
                         self.queue_users_to_remind.remove(user_id)
 
-            asyncio.sleep(5)
+            await asyncio.sleep(5)
 
     async def get_user(self, user_id: int) -> dict:
         if user_id not in self.users:
@@ -94,4 +96,4 @@ class State:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 self.users[user_id] = await resp.json()
-                self.users[user_id]["eol"] = time.time() + self.user.ttl
+                self.users[user_id]["eol"] = time.time() + self.user_ttl
