@@ -4,6 +4,7 @@ import discord
 import json
 import time
 import shutil
+import state
 import os
 from bidict import bidict
 from leaderboard_scraper import *
@@ -12,6 +13,7 @@ from pb_img_gen import gen_pb
 load_dotenv()
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+cache = state.State()
 
 CHANNEL_ID = 0
 intents = discord.Intents.default()
@@ -353,7 +355,7 @@ async def on_ready():
     # guild = bot.get_guild(1141412260217114694)
     # maintain_hdpals.start(channel, guild)
     maintain_hdpals.start(channel)
-
+    await cache.attach(bot)
 
 # function for adding a role
 async def remove_role(source, oldroleid):
@@ -369,7 +371,7 @@ async def add_role(source, newroleid):
     )
 
 
-@bot.tree.command(name="stats", description="shows user's stats")
+@bot.tree.command(name="stats", description="Shows a user's stats")
 async def stats(
     interaction: discord.Interaction,
     player: discord.Member = None,
@@ -411,6 +413,78 @@ async def stats(
             )
             stats_embed.set_thumbnail(url=player.display_avatar.url)
             await interaction.response.send_message(embed=stats_embed)
+
+
+@bot.tree.command(name="queue", description="Shows the current multiplayer queue")
+async def queue(
+    interaction: discord.Interaction,
+):
+    # load the id dictionary
+    with open("id_dictionary.json", "r") as outfile:
+        id_dict = json.load(outfile)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://104.207.135.180:44454/vs/queue") as resp:
+            raw_queue = await resp.content.read(4)
+            version_offset = 0
+            online_player_count_offset = 1
+            queue_total_offset = 2
+            queue_returned_offset = 3
+            queue_userids_offset = 4
+            queue_list = []
+            while raw_queue:
+                int_val = int.from_bytes(raw_queue, "little")
+                queue_list.append(int_val)
+                raw_queue = await resp.content.read(4)
+        online_player_count = queue_list[online_player_count_offset]
+        queue_total = queue_list[queue_total_offset]
+        queue_returned = queue_list[queue_returned_offset]
+        queue_userids = queue_list[queue_userids_offset:]
+        description_string = "```\n"
+        # create embed object for the queue command
+        for index, item in enumerate(queue_userids):
+            rank = index + 1
+            user = await cache.get_user(item)
+            description_string += f"{rank:02d} | {user['name']}\n"
+        description_string += f"```"
+        queue_embed = discord.Embed(
+            title=f"Current Multiplayer Queue", description=description_string
+        )
+        await interaction.response.send_message(embed=queue_embed)
+
+
+@bot.tree.command(
+    name="remindme",
+    description="Pings you when you are 1 spot away from playing on the queue",
+)
+async def reminder(interaction: discord.Interaction):
+    with open("id_dictionary.json", "r") as outfile:
+        id_dict = json.load(outfile)
+    id_lookup = bidict(id_dict)
+    userid = id_lookup.inverse[interaction.user.id]
+
+    user_was_added_to_reminders = await cache.add_user_to_queue_reminders(userid)
+
+    if user_was_added_to_reminders:
+        await interaction.response.send_message(
+            f"Got it. I'll ping you the next time you're 3rd in queue.", ephemeral=True
+        )
+
+    else:
+        await interaction.response.send_message(
+            "You've already asked for a reminder!", ephemeral=True
+        )
+
+
+""" @bot.event
+async def on_raw_reaction_add(payload):
+    # check if reaction was added to a message in clips channel, and emoji was sorath eye
+    if payload.channel_id == 1021473919716302888 and payload.emoji.id == 1277487425962115144:
+        # check if 10 or more sorath eye reactions
+        channel = bot.get_channel(1021473919716302888)
+        message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        reaction = discord.utils.get(message.reactions, emoji='<:sorath_eye:1277487425962115144>')
+        if reaction.count >= 10: """
 
 
 # ran when a message is posted
