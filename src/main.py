@@ -52,6 +52,7 @@ top_roles = [
 wr_role_id = 1142895896372203550
 
 bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
+cache = state.State(bot)
 
 
 def update_dict(key, value, source_dict):
@@ -413,6 +414,7 @@ async def stats(
             stats_embed.set_thumbnail(url=player.display_avatar.url)
             await interaction.response.send_message(embed=stats_embed)
 
+
 @bot.tree.command(name="queue", description="Shows the current multiplayer queue")
 async def queue(
     interaction: discord.Interaction,
@@ -420,9 +422,9 @@ async def queue(
     # load the id dictionary
     with open("id_dictionary.json", "r") as outfile:
         id_dict = json.load(outfile)
-    
+
     async with aiohttp.ClientSession() as session:
-        async with session.post('http://104.207.135.180:44454/vs/queue') as resp:
+        async with session.post("http://104.207.135.180:44454/vs/queue") as resp:
             raw_queue = await resp.content.read(4)
             version_offset = 0
             online_player_count_offset = 1
@@ -436,7 +438,7 @@ async def queue(
                 raw_queue = await resp.content.read(4)
         online_player_count = queue_list[online_player_count_offset]
         queue_total = queue_list[queue_total_offset]
-        queue_returned =  queue_list[queue_returned_offset]
+        queue_returned = queue_list[queue_returned_offset]
         queue_userids = queue_list[queue_userids_offset:]
         description_string = "```\n"
         # create embed object for the queue command
@@ -446,23 +448,34 @@ async def queue(
             description_string += f"{rank:02d} | {user}\n"
         description_string += f"```"
         queue_embed = discord.Embed(
-            title=f"Current Multiplayer Queue",
-            description=description_string
+            title=f"Current Multiplayer Queue", description=description_string
         )
         await interaction.response.send_message(embed=queue_embed)
 
-@bot.tree.command(name="queue reminder", description="Pings you when you are 1 spot away from playing on the queue")
-async def reminder(
-    interaction: discord.Interaction,
-    player: discord.Member = None,    
-):
-    # load the id dictionary
+
+@bot.tree.command(
+    name="queue reminder",
+    description="Pings you when you are 1 spot away from playing on the queue",
+)
+async def reminder(interaction: discord.Interaction):
     with open("id_dictionary.json", "r") as outfile:
         id_dict = json.load(outfile)
     id_lookup = bidict(id_dict)
-    game_id = id_lookup.inverse[player.id]    
-           
-                
+    userid = id_lookup.inverse[interaction.user.id]
+
+    user_was_added_to_reminders = cache.add_user_to_queue_reminders(userid)
+
+    if user_was_added_to_reminders:
+        await interaction.response.send_message(
+            "Added you to the reminders queue.", ephemeral=True
+        )
+
+    else:
+        await interaction.response.send_message(
+            "Could not add you to the reminders queue: you are either already present or the queue is too short."
+        )
+
+
 """ @bot.event
 async def on_raw_reaction_add(payload):
     # check if reaction was added to a message in clips channel, and emoji was sorath eye
@@ -472,7 +485,8 @@ async def on_raw_reaction_add(payload):
         message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
         reaction = discord.utils.get(message.reactions, emoji='<:sorath_eye:1277487425962115144>')
         if reaction.count >= 10: """
-            
+
+
 # ran when a message is posted
 @bot.event
 async def on_message(message):
@@ -633,5 +647,5 @@ async def on_message(message):
             f"Execution took {round((time.monotonic() - start_time)*1000)}ms"
         )
 
-cache = state.State()
+
 bot.run(BOT_TOKEN)
