@@ -467,12 +467,12 @@ async def reminder(interaction: discord.Interaction):
 
     if user_was_added_to_reminders:
         await interaction.response.send_message(
-            "Added you to the reminders queue.", ephemeral=True
+            f"Got it. I'll ping you the next time you're 3rd in queue.", ephemeral=True
         )
 
     else:
         await interaction.response.send_message(
-            "Could not add you to the reminders queue: you are either already present or the queue is too short."
+            "Could not add you to the reminders queue: you are either already present.", ephemeral=True
         )
 
 
