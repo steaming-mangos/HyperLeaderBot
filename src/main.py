@@ -472,7 +472,7 @@ async def reminder(interaction: discord.Interaction):
 
     else:
         await interaction.response.send_message(
-            "Could not add you to the reminders queue: you are either already present.", ephemeral=True
+            "You've already asked for a reminder!", ephemeral=True
         )
 
 
