@@ -12,6 +12,7 @@ class State:
     queue_users_to_remind: list[int] = []
     queue_reminder_channel: int = 1021477531733471314
     queue_userids: list[int] = []
+    queue_refresh_secs: int = 5
 
     bot: DiscordBot
 
@@ -21,11 +22,11 @@ class State:
 
     async def add_user_to_queue_reminders(self, user_id: int) -> bool:
         # returns: bool :: whether the user was added to the queue
-        # (false = already asked to be reminded)
-        await self.__refresh_queue()
-        
-        queue_is_big_enough = (len(self.queue_userids) > 2)
-        if not queue_is_big_enough or user_id in self.queue_users_to_remind or user_id not in self.queue_userids:
+        if (
+            len(self.queue_userids) < 3
+            or user_id in self.queue_users_to_remind
+            or user_id not in self.queue_userids
+        ):
             return False
 
         self.queue_users_to_remind.append(user_id)
@@ -43,38 +44,34 @@ class State:
                     queue_list.append(int_val)
                     raw_queue = await resp.content.read(4)
                 self.queue_userids = queue_list[queue_userids_offset:]
-                print(self.queue_userids)
 
     async def __queue_tick(self) -> None:
         QUEUE_REMINDER_CHANNEL = self.bot.fetch_channel(self.queue_reminder_channel)
 
         while True:
-            if len(self.queue_users_to_remind) > 0:
-                # load the id dictionary
-                with open("id_dictionary.json", "r") as outfile:
-                    id_dict = json.load(outfile)
+            # load the id dictionary
+            with open("id_dictionary.json", "r") as outfile:
+                id_dict = json.load(outfile)
 
-                await self.__refresh_queue()
+            await self.__refresh_queue()
 
-                if len(self.queue_userids) < 3:
-                    self.queue_users_to_remind = (
-                        []
-                    )  # empty the reminders: queue is too small
+            if len(self.queue_userids) < 3:
+                self.queue_users_to_remind = (
+                    []
+                )  # empty the reminders: queue is too small
 
-                for user_id in self.queue_users_to_remind:
-                    if user_id not in self.queue_userids:
-                        self.queue_users_to_remind.remove(
-                            user_id
-                        )  # no need to keep tracking: not in queue
+            for user_id in self.queue_users_to_remind:
+                if user_id not in self.queue_userids:
+                    self.queue_users_to_remind.remove(user_id)
 
-                    if self.queue_userids[2] == user_id:
-                        user_discord_id = id_dict[user_id]
-                        await QUEUE_REMINDER_CHANNEL.send(
-                            f"<@{user_discord_id}>, you're up next! Get ready!"
-                        )
-                        self.queue_users_to_remind.remove(user_id)
+                elif self.queue_userids[2] == user_id:
+                    user_discord_id = id_dict[user_id]
+                    await QUEUE_REMINDER_CHANNEL.send(
+                        f"<@{user_discord_id}>, you're up next! Get ready!"
+                    )
+                    self.queue_users_to_remind.remove(user_id)
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(self.queue_refresh_secs)
 
     async def get_user(self, user_id: int) -> dict:
         if user_id not in self.users:
