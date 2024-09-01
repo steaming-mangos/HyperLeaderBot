@@ -53,13 +53,14 @@ class State:
 
             await self.__refresh_queue()
 
-            for user_id in self.queue_users_to_remind:
-                if self.queue_userids[2] == user_id:
-                    user_discord_id = id_dict[str(user_id)]
-                    await QUEUE_REMINDER_CHANNEL.send(
-                        f"<@{user_discord_id}>, you're up next! Get ready!"
-                    )
-                    self.queue_users_to_remind.remove(user_id)
+            if len(self.queue_userids) > 2:
+                for user_id in self.queue_users_to_remind:
+                    if self.queue_userids[2] == user_id:
+                        user_discord_id = id_dict[str(user_id)]
+                        await QUEUE_REMINDER_CHANNEL.send(
+                            f"<@{user_discord_id}>, you're up next! Get ready!"
+                        )
+                        self.queue_users_to_remind.remove(user_id)
 
             print(self.queue_users_to_remind)
             print(self.queue_userids)
