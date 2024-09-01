@@ -440,12 +440,17 @@ async def queue(
         queue_total = queue_list[queue_total_offset]
         queue_returned = queue_list[queue_returned_offset]
         queue_userids = queue_list[queue_userids_offset:]
-        description_string = "```\n"
+
         # create embed object for the queue command
-        for index, item in enumerate(queue_userids):
-            rank = index + 1
-            user = await cache.get_user(item)
-            description_string += f"{rank:02d} | {user['name']}\n"
+        description_string = "```\n"
+        if len(queue_userids) == 0:
+            description_string += "No players in queue."
+        else:
+            for index, item in enumerate(queue_userids):
+                rank = index + 1
+                user = await cache.get_user(item)
+                description_string += f"{rank:02d} | {user['name']}\n"
+
         description_string += f"```"
         queue_embed = discord.Embed(
             title=f"Current Multiplayer Queue", description=description_string
