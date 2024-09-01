@@ -2,7 +2,7 @@ import time
 import aiohttp
 import asyncio
 from discord.ext.commands import Bot as DiscordBot
-import json
+from uid_map import load_map_dict
 
 
 class State:
@@ -22,8 +22,6 @@ class State:
 
     async def add_user_to_queue_reminders(self, user_id: int) -> bool:
         # returns: bool :: whether the user was added to the queue
-        user_id = int(user_id) # this should be ok?
-
         if user_id in self.queue_users_to_remind:
             return False
 
@@ -33,7 +31,8 @@ class State:
     async def __refresh_queue(self) -> None:
         # logic to determine spot position
         async with aiohttp.ClientSession() as session:
-            async with session.post("http://104.207.135.180:44454/vs/queue") as resp:
+            url = "http://104.207.135.180:44454/vs/queue"
+            async with session.post(url) as resp:
                 raw_queue = await resp.content.read(4)
                 queue_userids_offset = 4
                 queue_list = []
@@ -44,18 +43,18 @@ class State:
                 self.queue_userids = queue_list[queue_userids_offset:]
 
     async def __queue_tick(self) -> None:
-        QUEUE_REMINDER_CHANNEL = await self.bot.fetch_channel(self.queue_reminder_channel)
+        QUEUE_REMINDER_CHANNEL = self.bot.fetch_channel(
+                self.queue_reminder_channel
+        )
 
         while True:
-            # load the id dictionary
-            with open("id_dictionary.json", "r") as outfile:
-                id_dict = json.load(outfile)
+            id_lookup = load_map_dict()
 
             await self.__refresh_queue()
 
             for user_id in self.queue_users_to_remind:
                 if self.queue_userids[2] == user_id:
-                    user_discord_id = id_dict[str(user_id)]
+                    user_discord_id = id_lookup[user_id]
                     await QUEUE_REMINDER_CHANNEL.send(
                         f"<@{user_discord_id}>, you're up next! Get ready!"
                     )

@@ -6,8 +6,8 @@ import time
 import shutil
 import state
 import os
-from bidict import bidict
-from leaderboard_scraper import *
+from uid_map import load_map_bidict
+from leaderboard_scraper import get_shit
 from pb_img_gen import gen_pb
 
 load_dotenv()
@@ -380,9 +380,7 @@ async def stats(
         player = interaction.user
 
     # load the id dictionary
-    with open("id_dictionary.json", "r") as outfile:
-        id_dict = json.load(outfile)
-    id_lookup = bidict(id_dict)
+    id_lookup = load_map_bidict()
     game_id = id_lookup.inverse[player.id]
 
     # open session with hyprd.mn
@@ -458,9 +456,7 @@ async def queue(
     description="Pings you when you are 1 spot away from playing on the queue",
 )
 async def reminder(interaction: discord.Interaction):
-    with open("id_dictionary.json", "r") as outfile:
-        id_dict = json.load(outfile)
-    id_lookup = bidict(id_dict)
+    id_lookup = load_map_bidict()
     userid = id_lookup.inverse[interaction.user.id]
 
     user_was_added_to_reminders = await cache.add_user_to_queue_reminders(userid)
