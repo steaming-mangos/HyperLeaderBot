@@ -433,7 +433,7 @@ async def stats(
             + f"**Score:** [{round(user_stats['score']/10000, 3):.3f}](https://hyprd.mn/run/{user_stats['run_uid']})\n"
             + f"**Deaths:** {user_stats['deaths']}\n"
             + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
-            + f"**PVP Rank & ELO:** {description_string}"
+            + f"**PVP Rank & ELO:** {description_string}\n"
             + f"**God Killer:** {check_deicide}",
         )
         stats_embed.set_thumbnail(url=player.display_avatar.url)
@@ -491,22 +491,23 @@ async def pvpleaderboard(
     while index < len(leaderboard_raw) - 1:
         rank = int((index / 2) + 1)
         user_id = leaderboard_raw[index]
+        user = await cache.get_user(user_id)
         elo = (leaderboard_raw[index + 1]/10000)
         if elo >= 1000:
-            description_string += f"{rank:02d} {str(elo)[:8]} {user_id}"
+            description_string += f"{rank:02d} {str(elo)[:8]} {user['name']}"
         elif elo < 1000 and elo >=100:
-            description_string += f"{rank:02d} {str(elo)[:7]} {user_id}"
+            description_string += f"{rank:02d} {str(elo)[:7]} {user['name']}"
         elif elo < 100 and elo >=10:
-            description_string += f"{rank:02d} {str(elo)[:6]} {user_id}"
+            description_string += f"{rank:02d} {str(elo)[:6]} {user['name']}"
         else:
-            description_string += f"{rank:02d} {str(elo)[:5]} {user_id}"
+            description_string += f"{rank:02d} {str(elo)[:5]} {user['name']}"
         index += 2
 
-        description_string += f"```"
-        pvpleaderboard_embed = discord.Embed(
-            title="Current Multiplayer Leaderboard", description=description_string
-        )
-        await interaction.response.send_message(embed=pvpleaderboard_embed)
+    description_string += f"```"
+    pvpleaderboard_embed = discord.Embed(
+        title="Global PVP Leaderboard Top 10", description=description_string
+    )
+    await interaction.response.send_message(embed=pvpleaderboard_embed)
 
 
 @bot.tree.command(
