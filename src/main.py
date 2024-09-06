@@ -7,6 +7,8 @@ import shutil
 import state
 import os
 import uid_map
+import aiohttp
+import asyncio
 from leaderboard_scraper import get_shit
 from pb_img_gen import gen_pb
 
@@ -391,26 +393,51 @@ async def stats(
             # make local dict out of dict from hyprd.mn
             user_stats = await resp.json()
             # check if user has gotten deicide yet, then set check_deicide to corresponding emoji
-            if user_stats["deicide"] == 1:
-                check_deicide = ":white_check_mark:"
+
+        url = 'http://104.207.135.180:44454/vs/user_stats'
+        params = {'user': f"{game_id}"}
+        user_id_offset = 0
+        elo_offset = 1
+        rank_offset = 2
+        async with session.post(url, data=params) as resp:
+            data = await resp.content.read(4)
+            test_array = []
+            while data:
+                int_val = int.from_bytes(data,"little")
+                test_array.append(int_val)
+                data = await resp.content.read(4)
+            user_elo = test_array[elo_offset]/10000
+            user_rank =  test_array[rank_offset]
+            if user_elo >= 1000:
+                description_string = f"{user_rank} | {str(user_elo)[:8]}"
+            elif user_elo < 1000 and user_elo >=100:
+                description_string = f"{user_rank} | {str(user_elo)[:7]}"
+            elif user_elo < 100 and user_elo >=10:
+                description_string = f"{user_rank} | {str(user_elo)[:6]}"
             else:
-                check_deicide = ":cross_mark:"
-            # parse playtime
-            playtime_s = round(user_stats["playtime"] / 10000)
-            playtime_m = round((playtime_s - playtime_s % 60) / 60)
-            playtime_h = round((playtime_m - playtime_m % 60) / 60)
-            # create embed object for the stats command
-            stats_embed = discord.Embed(
-                title=f"Stats for {user_stats['name']}",
-                url=f"https://hyprd.mn/user/{game_id}",
-                description=f"**Rank:** {user_stats['rank']}\n"
-                + f"**Score:** [{round(user_stats['score']/10000, 3):.3f}](https://hyprd.mn/run/{user_stats['run_uid']})\n"
-                + f"**Deaths:** {user_stats['deaths']}\n"
-                + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
-                + f"**God Killer:** {check_deicide}",
-            )
-            stats_embed.set_thumbnail(url=player.display_avatar.url)
-            await interaction.response.send_message(embed=stats_embed)
+                description_string = f"{user_rank} | {str(user_elo)[:5]}"
+
+        if user_stats["deicide"] == 1:
+            check_deicide = ":white_check_mark:"
+        else:
+            check_deicide = ":cross_mark:"
+        # parse playtime
+        playtime_s = round(user_stats["playtime"] / 10000)
+        playtime_m = round((playtime_s - playtime_s % 60) / 60)
+        playtime_h = round((playtime_m - playtime_m % 60) / 60)
+        # create embed object for the stats command
+        stats_embed = discord.Embed(
+            title=f"Stats for {user_stats['name']}",
+            url=f"https://hyprd.mn/user/{game_id}",
+            description=f"**Rank:** {user_stats['rank']}\n"
+            + f"**Score:** [{round(user_stats['score']/10000, 3):.3f}](https://hyprd.mn/run/{user_stats['run_uid']})\n"
+            + f"**Deaths:** {user_stats['deaths']}\n"
+            + f"**Time Alive:** {playtime_h}h {playtime_m%60}m {round(playtime_s%60)}s\n"
+            + f"**PVP Rank & ELO:** {description_string}"
+            + f"**God Killer:** {check_deicide}",
+        )
+        stats_embed.set_thumbnail(url=player.display_avatar.url)
+        await interaction.response.send_message(embed=stats_embed)
 
 
 @bot.tree.command(name="queue", description="Shows the current multiplayer queue")
@@ -434,6 +461,52 @@ async def queue(
         title="Current Multiplayer Queue", description=description_string
     )
     await interaction.response.send_message(embed=queue_embed)
+
+@bot.tree.command(name="pvpleaderboard", description="Shows the current multiplayer top 10 leaderboard")
+async def pvpleaderboard(
+    interaction: discord.Interaction,
+):
+    url = 'http://104.207.135.180:44454/vs/leaderboard'
+    params = {'begin': '0', 'count': '10'}
+    version_offset = 0
+    count_begin_offset = 1
+    count_total_offset = 2
+    leaderboard_offset = 3
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=params) as resp:
+            data = await resp.content.read(4)
+            test_array = []
+            while data:
+                int_val = int.from_bytes(data,"little")
+                test_array.append(int_val)
+                data = await resp.content.read(4)
+            version_number = test_array[version_offset]
+            count_begin = test_array[count_begin_offset]
+            count_total =  test_array[count_total_offset]
+            leaderboard_raw = test_array[leaderboard_offset:]
+
+    description_string = "```\n"
+    index = 0
+
+    while index < len(leaderboard_raw) - 1:
+        rank = int((index / 2) + 1)
+        user_id = leaderboard_raw[index]
+        elo = (leaderboard_raw[index + 1]/10000)
+        if elo >= 1000:
+            description_string += f"{rank:02d} {str(elo)[:8]} {user_id}"
+        elif elo < 1000 and elo >=100:
+            description_string += f"{rank:02d} {str(elo)[:7]} {user_id}"
+        elif elo < 100 and elo >=10:
+            description_string += f"{rank:02d} {str(elo)[:6]} {user_id}"
+        else:
+            description_string += f"{rank:02d} {str(elo)[:5]} {user_id}"
+        index += 2
+
+        description_string += f"```"
+        pvpleaderboard_embed = discord.Embed(
+            title="Current Multiplayer Leaderboard", description=description_string
+        )
+        await interaction.response.send_message(embed=pvpleaderboard_embed)
 
 
 @bot.tree.command(
