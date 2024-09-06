@@ -6,8 +6,8 @@ import time
 import shutil
 import state
 import os
-from bidict import bidict
-from leaderboard_scraper import *
+import uid_map
+from leaderboard_scraper import get_shit
 from pb_img_gen import gen_pb
 
 load_dotenv()
@@ -380,9 +380,7 @@ async def stats(
         player = interaction.user
 
     # load the id dictionary
-    with open("id_dictionary.json", "r") as outfile:
-        id_dict = json.load(outfile)
-    id_lookup = bidict(id_dict)
+    id_lookup = uid_map.load_map_bidict()
     game_id = id_lookup.inverse[player.id]
 
     # open session with hyprd.mn
@@ -419,43 +417,23 @@ async def stats(
 async def queue(
     interaction: discord.Interaction,
 ):
-    # load the id dictionary
-    with open("id_dictionary.json", "r") as outfile:
-        id_dict = json.load(outfile)
+    queue_userids: list[int] = await cache.get_pvp_queue()
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post("http://104.207.135.180:44454/vs/queue") as resp:
-            raw_queue = await resp.content.read(4)
-            version_offset = 0
-            online_player_count_offset = 1
-            queue_total_offset = 2
-            queue_returned_offset = 3
-            queue_userids_offset = 4
-            queue_list = []
-            while raw_queue:
-                int_val = int.from_bytes(raw_queue, "little")
-                queue_list.append(int_val)
-                raw_queue = await resp.content.read(4)
-        online_player_count = queue_list[online_player_count_offset]
-        queue_total = queue_list[queue_total_offset]
-        queue_returned = queue_list[queue_returned_offset]
-        queue_userids = queue_list[queue_userids_offset:]
+    # create embed object for the queue command
+    description_string = "```\n"
+    if len(queue_userids) == 0:
+        description_string += "No players in queue."
+    else:
+        for index, item in enumerate(queue_userids):
+            rank = index + 1
+            user = await cache.get_user(item)
+            description_string += f"{rank:02d} | {user['name']}\n"
 
-        # create embed object for the queue command
-        description_string = "```\n"
-        if len(queue_userids) == 0:
-            description_string += "No players in queue."
-        else:
-            for index, item in enumerate(queue_userids):
-                rank = index + 1
-                user = await cache.get_user(item)
-                description_string += f"{rank:02d} | {user['name']}\n"
-
-        description_string += f"```"
-        queue_embed = discord.Embed(
-            title=f"Current Multiplayer Queue", description=description_string
-        )
-        await interaction.response.send_message(embed=queue_embed)
+    description_string += "```"
+    queue_embed = discord.Embed(
+        title="Current Multiplayer Queue", description=description_string
+    )
+    await interaction.response.send_message(embed=queue_embed)
 
 
 @bot.tree.command(
@@ -463,9 +441,7 @@ async def queue(
     description="Pings you when you are 1 spot away from playing on the queue",
 )
 async def reminder(interaction: discord.Interaction):
-    with open("id_dictionary.json", "r") as outfile:
-        id_dict = json.load(outfile)
-    id_lookup = bidict(id_dict)
+    id_lookup = uid_map.load_map_bidict()
     userid = id_lookup.inverse[interaction.user.id]
 
     user_was_added_to_reminders = await cache.add_user_to_queue_reminders(userid)
