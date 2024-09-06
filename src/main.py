@@ -494,13 +494,13 @@ async def pvpleaderboard(
         user = await cache.get_user(user_id)
         elo = (leaderboard_raw[index + 1]/10000)
         if elo >= 1000:
-            description_string += f"{rank:02d} {str(elo)[:8]} {user['name']}"
+            description_string += f"{rank:02d} {str(elo)[:8]} {user['name']}\n"
         elif elo < 1000 and elo >=100:
-            description_string += f"{rank:02d} {str(elo)[:7]} {user['name']}"
+            description_string += f"{rank:02d} {str(elo)[:7]} {user['name']}\n"
         elif elo < 100 and elo >=10:
-            description_string += f"{rank:02d} {str(elo)[:6]} {user['name']}"
+            description_string += f"{rank:02d} {str(elo)[:6]} {user['name']}\n"
         else:
-            description_string += f"{rank:02d} {str(elo)[:5]} {user['name']}"
+            description_string += f"{rank:02d} {str(elo)[:5]} {user['name']}\n"
         index += 2
 
     description_string += f"```"
