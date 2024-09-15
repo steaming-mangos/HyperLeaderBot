@@ -20,6 +20,9 @@ cache = state.State()
 CHANNEL_ID = 0
 intents = discord.Intents.default()
 intents.message_content = True
+intents.reactions = True
+intents.members = True
+intents.guilds = True
 
 # array to store scores and their associated role id's
 role_array = [
@@ -553,6 +556,9 @@ async def on_message(message):
     # prevents infinite loop from bot responding to itself
     if message.author == bot.user:
         return
+
+    # keep queueu pinned
+    await cache.keep_queue_pinned(message)
 
     # register command
     # if message.content.startswith('register'):

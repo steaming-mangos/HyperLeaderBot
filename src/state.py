@@ -1,6 +1,7 @@
 import time
 import aiohttp
 import asyncio
+import discord
 from discord.ext.commands import Bot as DiscordBot
 from uid_map import load_map_dict
 
@@ -10,11 +11,15 @@ class State:
     __user_ttl: int = 1800  # time to live in seconds
 
     __queue_users_to_remind: list[int] = []
+    __queue_pinned_channel: int = 1284684728657645623
+    __queue_pinned_message: int = 0
     __queue_reminder_channel: int = 1021477531733471314
     __queue_userids: list[int] = []
-    __queue_refresh_secs: int = 5
+    __queue_refresh_secs: int = 30
 
     __bot: DiscordBot
+
+    # why are we doing double underscores before everything
 
     async def attach(self, bot: DiscordBot):
         """
@@ -25,6 +30,7 @@ class State:
         :param: bot: discord.ext.commands.Bot - The Discord bot
         """
         self.__bot = bot
+        await self.__setup_pinned_queue()
         asyncio.ensure_future(self.__queue_tick())
 
     async def add_user_to_queue_reminders(self, user_id: int) -> bool:
@@ -64,27 +70,22 @@ class State:
                     queue_list.append(int_val)
                     raw_queue = await resp.content.read(4)
                 self.__queue_userids = queue_list[queue_userids_offset:]
+        await self.__update_pinned_message()
 
     async def __queue_tick(self) -> None:
-        QUEUE_REMINDER_CHANNEL = self.__bot.fetch_channel(
+        QUEUE_REMINDER_CHANNEL = self.__bot.get_channel(
                 self.__queue_reminder_channel
         )
 
         while True:
-            id_lookup = load_map_dict()
+            try:
+                #id_lookup = load_map_dict()
 
-            await self.__refresh_queue()
+                await self.__refresh_queue()
 
-            if len(self.__queue_userids) > 2:
-                for user_id in self.__queue_users_to_remind:
-                    if self.__queue_userids[2] == user_id:
-                        user_discord_id = id_lookup[user_id]
-                        await QUEUE_REMINDER_CHANNEL.send(
-                            f"<@{user_discord_id}>, you're up next! Get ready!"
-                        )
-                        self.__queue_users_to_remind.remove(user_id)
-
-            await asyncio.sleep(self.__queue_refresh_secs)
+                await asyncio.sleep(self.__queue_refresh_secs)
+            except:
+                print("exception in __queue_tick")
 
     async def get_user(self, user_id: int) -> dict:
         """
@@ -102,6 +103,55 @@ class State:
             await self.__refresh_user(user_id)
 
         return self.__cached_users[user_id]
+    
+    #pinned queue msg stuff
+
+    async def __setup_pinned_queue(self) -> None:
+        pinned_channel = self.__bot.get_channel(self.__queue_pinned_channel)
+        queue_embed = await self.__generate_queue_embed()
+        self.__queue_pinned_message = await pinned_channel.send(embed=queue_embed)
+        return
+    
+    async def __update_pinned_message(self) -> None:
+        if(self.__queue_pinned_message != 0):
+            print("Updating pinned queue msg")
+            queue_embed = await self.__generate_queue_embed()
+            await self.__queue_pinned_message.edit(embed = queue_embed)
+
+        return
+    
+    async def keep_queue_pinned(self, message: discord.Message) -> None:
+        if(message.channel.id == self.__queue_pinned_channel):
+            #delete current pinned msg
+            if(self.__queue_pinned_message != 0):
+                tbd = self.__queue_pinned_message
+                self.__queue_pinned_message = 0 # mark the message as deleted even if we haven't gotten a response back yet
+                await tbd.delete()
+                #send new message w/ embed reference to real pinned message
+                queue_embed = await self.__generate_queue_embed()
+                self.__queue_pinned_message = await message.channel.send(embed=queue_embed)
+            else:
+                print("Already deleting message...")
+        return
+    
+    async def __generate_queue_embed(self):
+        queue_userids: list[int] = self.__queue_userids
+
+        # create embed object for the queue command
+        description_string = "```\n"
+        if len(queue_userids) == 0:
+            description_string += "No players in queue."
+        else:
+            for index, item in enumerate(queue_userids):
+                rank = index + 1
+                user = await self.get_user(item)
+                description_string += f"{rank:02d} | {user['name']}\n"
+
+        description_string += "```"
+        queue_embed = discord.Embed(
+            title="Current Multiplayer Queue", description=description_string
+        )
+        return queue_embed
 
     async def __refresh_user(self, user_id: int) -> None:
         try:
