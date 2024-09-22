@@ -47,6 +47,7 @@ role_array = [
     [415, 1054220981088039052],
     [420, 1054220981994004520],
     [425, 1144733410728890369],
+    [430, 1229720709664608307],
 ]
 
 top_roles = [
@@ -611,8 +612,8 @@ async def on_message(message):
             next_score = role_array[1]
 
         # check if score is above 425
-        elif score_new >= 425:
-            new_role_id = role_array[20][1]
+        elif score_new >= 430:
+            new_role_id = role_array[-1][1]
             next_score = None
 
         # determine which role is correct for new score
